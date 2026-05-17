@@ -25,7 +25,7 @@ def _bot_self_dict(me: dict[str, Any], member: dict[str, Any]) -> dict[str, Any]
     return {
         "user_id": me["user_id"],
         "status": member["status"],
-        "permissions": dict(member.get("permissions", {})),
+        "permissions": dict(member.get("permissions") or {}),
     }
 
 
