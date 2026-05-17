@@ -1,0 +1,16 @@
+# Per-machine config for telek's skills.
+# Copy this to skills.local.yaml (git-ignored) and adjust for your environment.
+# Skills read skills.local.yaml first, falling back to this example.
+
+# Path to the Culture server's agent manifest (suffix → directory mapping).
+# Used by skills that need to resolve a registered agent suffix to its repo dir.
+culture_server_yaml: ~/.culture/server.yaml
+
+# Sibling project paths checked by cross-repo skills (e.g. the cicd skill's
+# alignment-delta step). Workspace-relative paths (../foo) are preferred.
+# Entries that don't exist on disk are skipped silently — no need to comment
+# them out when you're on a machine that doesn't have them all checked out.
+sibling_projects:
+  - ../culture
+  - ../steward
+  - ../afi-cli
