@@ -18,15 +18,32 @@ _BOT_TOKEN_ENV = "TELEK_BOT_TOKEN"  # nosec B105 - env var name, not a credentia
 _FALLBACK_NICK = "telek"
 
 
+def _find_culture_yaml() -> Path | None:
+    """Locate telek's own ``culture.yaml`` by walking up from this module.
+
+    The nick must be telek's identity, not whatever ``culture.yaml`` happens
+    to sit in the user's current working directory. In an editable / source
+    install, walking up from ``__file__`` finds the repo root; in a wheel
+    install, no ``culture.yaml`` exists alongside the installed package and
+    the caller falls back to the literal nick.
+    """
+    here = Path(__file__).resolve()
+    for parent in here.parents:
+        candidate = parent / "culture.yaml"
+        if candidate.is_file():
+            return candidate
+    return None
+
+
 def _read_nick() -> str:
-    """Return the first agent suffix from `culture.yaml`, or the fallback.
+    """Return the first agent suffix from telek's ``culture.yaml``, or the fallback.
 
     Parsed without a YAML dependency to keep telek's runtime deps empty.
     Looks for the first ``suffix: <value>`` line under ``agents:``; anything
     fancier than the documented two-line shape falls back to ``telek``.
     """
-    cfg = Path("culture.yaml")
-    if not cfg.is_file():
+    cfg = _find_culture_yaml()
+    if cfg is None:
         return _FALLBACK_NICK
     try:
         text = cfg.read_text(encoding="utf-8")

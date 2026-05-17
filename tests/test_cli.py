@@ -89,6 +89,29 @@ def test_whoami_text(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixt
     assert "bot_token_configured: false" in out
 
 
+def test_whoami_nick_is_cwd_independent(
+    monkeypatch: pytest.MonkeyPatch, tmp_path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """`telek whoami` must report telek's nick regardless of CWD.
+
+    Regression guard for the bug where `_read_nick()` resolved `culture.yaml`
+    via the CWD — running `telek whoami` from a sibling repo would then
+    report the *sibling's* nick. The fix walks up from `__file__` to find
+    telek's own `culture.yaml`; this test sets the CWD to a directory
+    containing a decoy `culture.yaml` with a different suffix and asserts
+    whoami still resolves to `telek`.
+    """
+    monkeypatch.delenv("TELEK_BOT_TOKEN", raising=False)
+    (tmp_path / "culture.yaml").write_text(
+        "agents:\n- suffix: not-telek\n  backend: claude\n", encoding="utf-8"
+    )
+    monkeypatch.chdir(tmp_path)
+    rc = main(["whoami", "--json"])
+    assert rc == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["nick"] == "telek"
+
+
 def test_whoami_json_token_set(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
