@@ -23,6 +23,10 @@ def fake(monkeypatch) -> FakeTelegramClient:
         "telek.cli._commands.bot._build_client",
         lambda token: client,
     )
+    monkeypatch.setattr(
+        "telek.cli._commands.group._build_client",
+        lambda token: client,
+    )
     return client
 
 
@@ -106,3 +110,95 @@ def test_bot_send_reply_to_threaded_through(fake, capsys):
     assert rc == 0
     sent = [c for c in fake.calls if c.method == "send_message"]
     assert sent[0].kwargs["reply_to"] == 55
+
+
+# group roster
+
+def test_group_roster_returns_count_admins_botself(fake, capsys):
+    fake.member_count = 17
+    fake.administrators = [
+        {
+            "user_id": 1,
+            "username": "alice",
+            "first_name": "Alice",
+            "status": "creator",
+            "can_post": None,
+            "can_pin": None,
+            "can_invite": None,
+        }
+    ]
+    rc = main(["group", "roster", "--chat", "@test", "--json"])
+    assert rc == 0
+    payload = _json_of(capsys)
+    assert payload["verb"] == "group.roster"
+    assert payload["intent"]["member_count"] == 17
+    assert payload["intent"]["administrators"][0]["username"] == "alice"
+    assert "Bot API" in payload["intent"]["limits"]["note"]
+    assert payload["bot_self"]["user_id"] == 42
+
+
+def test_group_roster_no_apply_flag(fake):
+    with pytest.raises(SystemExit) as exc:
+        main(["group", "roster", "--chat", "@x", "--apply"])
+    assert exc.value.code == EXIT_USER_ERROR  # --apply is not defined for roster
+
+
+# group pin
+
+def test_group_pin_dry_run_default_does_not_pin(fake, capsys):
+    rc = main(["group", "pin", "--chat", "@x", "--message", "55", "--json"])
+    assert rc == 0
+    payload = _json_of(capsys)
+    assert payload["verb"] == "group.pin"
+    assert payload["intent"]["action"] == "pin"
+    assert payload["intent"]["message_id"] == 55
+    assert payload["dry_run"] is True
+    assert "pin_chat_message" not in [c.method for c in fake.calls]
+
+
+def test_group_pin_apply_calls_pin(fake, capsys):
+    rc = main(
+        ["group", "pin", "--chat", "@x", "--message", "55", "--apply", "--json"]
+    )
+    assert rc == 0
+    pinned = [c for c in fake.calls if c.method == "pin_chat_message"]
+    assert len(pinned) == 1
+    assert pinned[0].kwargs["message_id"] == 55
+
+
+def test_group_pin_requires_message_when_not_unpin(fake):
+    rc = main(["group", "pin", "--chat", "@x"])
+    assert rc == EXIT_USER_ERROR
+
+
+def test_group_pin_unpin_without_message_unpins_current(fake, capsys):
+    rc = main(["group", "pin", "--chat", "@x", "--unpin", "--apply", "--json"])
+    assert rc == 0
+    unpinned = [c for c in fake.calls if c.method == "unpin_chat_message"]
+    assert len(unpinned) == 1
+    assert unpinned[0].kwargs["message_id"] is None
+
+
+def test_group_pin_unpin_with_message_unpins_specific(fake, capsys):
+    rc = main(
+        ["group", "pin", "--chat", "@x", "--unpin", "--message", "55",
+         "--apply", "--json"]
+    )
+    assert rc == 0
+    unpinned = [c for c in fake.calls if c.method == "unpin_chat_message"]
+    assert unpinned[0].kwargs["message_id"] == 55
+
+
+def test_group_pin_blocks_apply_when_bot_lacks_can_pin(fake, capsys):
+    fake.bot_member = {
+        "user_id": 42,
+        "username": "fake_bot",
+        "first_name": "Fake",
+        "status": "administrator",
+        "permissions": {"can_post": True, "can_pin": False},
+    }
+    rc = main(
+        ["group", "pin", "--chat", "@x", "--message", "55", "--apply"]
+    )
+    assert rc == EXIT_USER_ERROR
+    assert "pin_chat_message" not in [c.method for c in fake.calls]

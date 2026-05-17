@@ -52,6 +52,7 @@ def _argv_has_json(argv: list[str] | None) -> bool:
 def _build_parser() -> argparse.ArgumentParser:
     from telek.cli._commands import bot as _bot_cmd
     from telek.cli._commands import explain as _explain_cmd
+    from telek.cli._commands import group as _group_cmd
     from telek.cli._commands import learn as _learn_cmd
     from telek.cli._commands import whoami as _whoami_cmd
 
@@ -70,6 +71,7 @@ def _build_parser() -> argparse.ArgumentParser:
     _explain_cmd.register(sub)
     _whoami_cmd.register(sub)
     _bot_cmd.register(sub)
+    _group_cmd.register(sub)
 
     return parser
 
