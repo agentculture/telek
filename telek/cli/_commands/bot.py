@@ -43,7 +43,7 @@ def _resolve_text(args: argparse.Namespace) -> str:
 
 def _validate_send(
     client: TelegramClient, args: argparse.Namespace, token: str | None
-):
+) -> tuple[ValidatedPlan, str]:
     try:
         me = client.get_me()
         chat = client.get_chat(args.chat)
@@ -145,7 +145,7 @@ def register(sub: argparse._SubParsersAction) -> None:
         choices=("none", "markdown", "html"),
         default="none",
     )
-    send.add_argument("--silent", action="store_true")
+    send.add_argument("--silent", action="store_true", help="suppress notification on send")
     send.add_argument("--reply-to", type=int, default=None)
     send.add_argument("--apply", action="store_true", help="actually send")
     send.add_argument("--json", action="store_true")
