@@ -15,6 +15,9 @@ classifiers = [
 ]
 dependencies = []
 
+[project.optional-dependencies]
+telegram = ["python-telegram-bot>=21,<22"]
+
 [project.urls]
 Homepage = "https://github.com/agentculture/telek"
 Issues = "https://github.com/agentculture/telek/issues"
