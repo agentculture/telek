@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import os
-import stat
 from pathlib import Path
 
 import pytest
@@ -50,7 +49,7 @@ def test_dotenv_quoted_value(tmp_path):
     assert load_token(cwd=tmp_path) == "quoted value"
 
 
-def test_dotenv_malformed_line_skipped(tmp_path, capsys):
+def test_dotenv_malformed_line_skipped(tmp_path):
     (tmp_path / ".env").write_text("not a key value line\nTELEK_BOT_TOKEN=ok\n")
     assert load_token(cwd=tmp_path) == "ok"
 
@@ -60,6 +59,7 @@ def test_dotenv_comments_and_blanks_ignored(tmp_path):
     assert load_token(cwd=tmp_path) == "ok"
 
 
+@pytest.mark.skipif(os.name != "posix", reason="POSIX permission bits required")
 def test_dotenv_world_writable_is_skipped(tmp_path, capsys):
     env_file = tmp_path / ".env"
     env_file.write_text("TELEK_BOT_TOKEN=insecure\n")

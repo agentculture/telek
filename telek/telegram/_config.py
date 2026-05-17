@@ -9,8 +9,9 @@ from __future__ import annotations
 
 import os
 import stat
-import sys
 from pathlib import Path
+
+from telek.cli._output import emit_diagnostic
 
 TOKEN_ENV_VAR = "TELEK_BOT_TOKEN"
 
@@ -79,10 +80,7 @@ def load_token(cwd: Path | None = None) -> str | None:
     base = cwd if cwd is not None else Path.cwd()
     for env_path in _find_dotenv_paths(base):
         if _is_world_writable(env_path):
-            print(
-                f"warning: {env_path} is world-writable; skipping for safety",
-                file=sys.stderr,
-            )
+            emit_diagnostic(f"warning: {env_path} is world-writable; skipping for safety")
             continue
         parsed = _parse_env_file(env_path)
         if TOKEN_ENV_VAR in parsed and parsed[TOKEN_ENV_VAR]:
