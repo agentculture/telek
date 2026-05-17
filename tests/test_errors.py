@@ -43,7 +43,7 @@ def test_bad_request_no_rights_is_user_error():
 def test_forbidden_bot_kicked_is_user_error():
     err = wrap(Forbidden("Forbidden: bot was kicked from the group chat"), token=None)
     assert err.code == EXIT_USER_ERROR
-    assert "not in" in err.message.lower() or "chat" in err.message.lower()
+    assert "not in this chat" in err.message.lower()
 
 
 def test_retry_after_is_env_error_with_seconds():
@@ -63,7 +63,7 @@ def test_network_error_is_env_error():
 def test_timed_out_is_env_error():
     err = wrap(TimedOut(), token=None)
     assert err.code == EXIT_ENV_ERROR
-    assert "network" in err.message.lower() or "timeout" in err.message.lower()
+    assert "network" in err.message.lower()
 
 
 def test_other_bad_request_passes_through_as_user_error():

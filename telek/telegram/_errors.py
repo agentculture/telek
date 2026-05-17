@@ -55,6 +55,8 @@ def wrap(exc: BaseException, *, token: str | None) -> TelekError:
             remediation="check the bot has access to this chat",
         )
 
+    # BadRequest inherits from NetworkError in python-telegram-bot v21;
+    # this branch MUST appear before the NetworkError arm below.
     if isinstance(exc, BadRequest):
         lowered = msg.lower()
         if "chat not found" in lowered:
@@ -72,7 +74,7 @@ def wrap(exc: BaseException, *, token: str | None) -> TelekError:
         return TelekError(
             code=EXIT_USER_ERROR,
             message=msg,
-            remediation="",
+            remediation="see telegram API docs for details",
         )
 
     if isinstance(exc, (NetworkError, TimedOut)):
