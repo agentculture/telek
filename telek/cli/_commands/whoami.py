@@ -50,12 +50,12 @@ def _report() -> dict[str, object]:
     }
 
 
-def cmd_whoami(args: argparse.Namespace) -> int:
+def cmd_whoami(args: argparse.Namespace) -> None:
     report = _report()
     json_mode = bool(getattr(args, "json", False))
     if json_mode:
         emit_result(report, json_mode=True)
-        return 0
+        return
     text = (
         f"nick: {report['nick']}\n"
         f"version: {report['version']}\n"
@@ -63,7 +63,6 @@ def cmd_whoami(args: argparse.Namespace) -> int:
         f"  ({_BOT_TOKEN_ENV} is{'' if report['bot_token_configured'] else ' not'} set)"
     )
     emit_result(text, json_mode=False)
-    return 0
 
 
 def register(sub: argparse._SubParsersAction) -> None:
