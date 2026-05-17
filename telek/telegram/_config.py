@@ -39,7 +39,7 @@ def _parse_env_file(path: Path) -> dict[str, str]:
     return result
 
 
-def _is_world_or_group_writable(path: Path) -> bool:
+def _is_world_writable(path: Path) -> bool:
     if os.name != "posix":
         return False
     try:
@@ -78,10 +78,9 @@ def load_token(cwd: Path | None = None) -> str | None:
 
     base = cwd if cwd is not None else Path.cwd()
     for env_path in _find_dotenv_paths(base):
-        if _is_world_or_group_writable(env_path):
+        if _is_world_writable(env_path):
             print(
-                f"warning: {env_path} has world-writable permissions; "
-                f"skipping for safety",
+                f"warning: {env_path} is world-writable; skipping for safety",
                 file=sys.stderr,
             )
             continue
