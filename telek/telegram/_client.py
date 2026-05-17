@@ -97,9 +97,7 @@ class TelegramClient:
         )
 
     def unpin_chat_message(self, chat: str, message_id: int | None) -> None:
-        self._run(
-            self._bot.unpin_chat_message(chat_id=chat, message_id=message_id)
-        )
+        self._run(self._bot.unpin_chat_message(chat_id=chat, message_id=message_id))
 
 
 def _serialize_member(m: Any) -> dict[str, Any]:

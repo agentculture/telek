@@ -13,7 +13,7 @@ from pathlib import Path
 
 from telek.cli._output import emit_diagnostic
 
-TOKEN_ENV_VAR = "TELEK_BOT_TOKEN"
+TOKEN_ENV_VAR = "TELEK_BOT_TOKEN"  # nosec B105 — env-var name, not a credential
 
 
 def _parse_env_file(path: Path) -> dict[str, str]:

@@ -9,10 +9,9 @@ pipeline — comes from
 
 ## Status
 
-**Alpha — scaffold only.** Today the CLI exposes the universal
-agent-affordance verbs (`learn`, `explain`, `whoami`). The Telegram surface
-(`telek bot ...`, `telek group ...`) lands in a follow-up PR; every write
-verb there will default to dry-run with an explicit `--apply` flag.
+**Alpha.** v0.2 lands the Telegram surface: `telek bot send`,
+`telek group roster`, `telek group pin`. Every write verb is dry-run by
+default; pass `--apply` to commit.
 
 ## Install
 
@@ -39,6 +38,21 @@ and respects the exit-code policy (`0` success / `1` user error / `2` env
 error). Errors carry a `{code, message, remediation}` shape; text mode
 renders as `error: ...` + `hint: ...` on stderr.
 
+### Telegram verbs (requires `pip install 'telek[telegram]'`)
+
+```bash
+# read-only: count + admins + bot's own permissions
+telek group roster --chat @announcements --json
+
+# write (dry-run by default; --apply to commit)
+telek bot send --chat @announcements --text "hello" --parse-mode markdown
+telek bot send --chat @announcements --text "hello" --apply
+
+# pin / unpin (also dry-run by default)
+telek group pin --chat @announcements --message 123 --apply
+telek group pin --chat @announcements --unpin --apply
+```
+
 ## Configuration
 
 | Variable           | Purpose                                                        |
@@ -47,6 +61,11 @@ renders as `error: ...` + `hint: ...` on stderr.
 
 Bot tokens, group IDs, and webhook secrets **must never** be committed to
 the repo — keep them in repo secrets or a git-ignored `.env`.
+
+Tokens are loaded from `os.environ` first, then from a `.env` file in the
+current directory, then from a `.env` at the nearest enclosing git root.
+Process env always wins. `.env` files that are world-writable on POSIX are
+skipped with a warning.
 
 ## Project shape
 

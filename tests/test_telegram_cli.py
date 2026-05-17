@@ -37,6 +37,7 @@ def _json_of(capsys) -> dict[str, Any]:
 
 # bot send
 
+
 def test_bot_send_dry_run_default_does_not_send(fake, capsys):
     rc = main(["bot", "send", "--chat", "@test", "--text", "hello", "--json"])
     assert rc == 0
@@ -48,9 +49,7 @@ def test_bot_send_dry_run_default_does_not_send(fake, capsys):
 
 
 def test_bot_send_apply_calls_send_message(fake, capsys):
-    rc = main(
-        ["bot", "send", "--chat", "@test", "--text", "hi", "--apply", "--json"]
-    )
+    rc = main(["bot", "send", "--chat", "@test", "--text", "hi", "--apply", "--json"])
     assert rc == 0
     payload = _json_of(capsys)
     assert payload["dry_run"] is False
@@ -94,9 +93,7 @@ def test_bot_send_chat_not_found_exits_user_error(fake, capsys):
 
 
 def test_bot_send_silent_flag_threaded_through(fake, capsys):
-    rc = main(
-        ["bot", "send", "--chat", "@x", "--text", "hi", "--silent", "--apply", "--json"]
-    )
+    rc = main(["bot", "send", "--chat", "@x", "--text", "hi", "--silent", "--apply", "--json"])
     assert rc == 0
     sent = [c for c in fake.calls if c.method == "send_message"]
     assert sent[0].kwargs["silent"] is True
@@ -104,8 +101,7 @@ def test_bot_send_silent_flag_threaded_through(fake, capsys):
 
 def test_bot_send_reply_to_threaded_through(fake, capsys):
     rc = main(
-        ["bot", "send", "--chat", "@x", "--text", "re", "--reply-to", "55",
-         "--apply", "--json"]
+        ["bot", "send", "--chat", "@x", "--text", "re", "--reply-to", "55", "--apply", "--json"]
     )
     assert rc == 0
     sent = [c for c in fake.calls if c.method == "send_message"]
@@ -113,6 +109,7 @@ def test_bot_send_reply_to_threaded_through(fake, capsys):
 
 
 # group roster
+
 
 def test_group_roster_returns_count_admins_botself(fake, capsys):
     fake.member_count = 17
@@ -145,6 +142,7 @@ def test_group_roster_no_apply_flag(fake):
 
 # group pin
 
+
 def test_group_pin_dry_run_default_does_not_pin(fake, capsys):
     rc = main(["group", "pin", "--chat", "@x", "--message", "55", "--json"])
     assert rc == 0
@@ -157,9 +155,7 @@ def test_group_pin_dry_run_default_does_not_pin(fake, capsys):
 
 
 def test_group_pin_apply_calls_pin(fake, capsys):
-    rc = main(
-        ["group", "pin", "--chat", "@x", "--message", "55", "--apply", "--json"]
-    )
+    rc = main(["group", "pin", "--chat", "@x", "--message", "55", "--apply", "--json"])
     assert rc == 0
     pinned = [c for c in fake.calls if c.method == "pin_chat_message"]
     assert len(pinned) == 1
@@ -180,10 +176,7 @@ def test_group_pin_unpin_without_message_unpins_current(fake, capsys):
 
 
 def test_group_pin_unpin_with_message_unpins_specific(fake, capsys):
-    rc = main(
-        ["group", "pin", "--chat", "@x", "--unpin", "--message", "55",
-         "--apply", "--json"]
-    )
+    rc = main(["group", "pin", "--chat", "@x", "--unpin", "--message", "55", "--apply", "--json"])
     assert rc == 0
     unpinned = [c for c in fake.calls if c.method == "unpin_chat_message"]
     assert unpinned[0].kwargs["message_id"] == 55
@@ -197,8 +190,6 @@ def test_group_pin_blocks_apply_when_bot_lacks_can_pin(fake, capsys):
         "status": "administrator",
         "permissions": {"can_post": True, "can_pin": False},
     }
-    rc = main(
-        ["group", "pin", "--chat", "@x", "--message", "55", "--apply"]
-    )
+    rc = main(["group", "pin", "--chat", "@x", "--message", "55", "--apply"])
     assert rc == EXIT_USER_ERROR
     assert "pin_chat_message" not in [c.method for c in fake.calls]

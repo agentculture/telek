@@ -45,6 +45,7 @@ def _shared_probes(
 
 # roster
 
+
 def _run_roster(args: argparse.Namespace) -> int:
     token = load_token()
     client = _build_client(token)
@@ -70,6 +71,7 @@ def _run_roster(args: argparse.Namespace) -> int:
 
 
 # pin
+
 
 def _validate_pin(
     args: argparse.Namespace,
@@ -119,9 +121,7 @@ def _run_pin(args: argparse.Namespace) -> int:
         if args.unpin:
             client.unpin_chat_message(chat=args.chat, message_id=args.message)
         else:
-            client.pin_chat_message(
-                chat=args.chat, message_id=args.message, silent=args.silent
-            )
+            client.pin_chat_message(chat=args.chat, message_id=args.message, silent=args.silent)
     except TelekError:
         raise
     except Exception as exc:

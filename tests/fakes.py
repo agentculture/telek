@@ -17,9 +17,7 @@ class FakeTelegramClient:
     """In-memory stand-in for telek.telegram.TelegramClient."""
 
     token: str | None = "fake-token"
-    me: dict[str, Any] = field(
-        default_factory=lambda: {"user_id": 42, "username": "fake_bot"}
-    )
+    me: dict[str, Any] = field(default_factory=lambda: {"user_id": 42, "username": "fake_bot"})
     chat: dict[str, Any] = field(
         default_factory=lambda: {
             "id": -1001,
@@ -63,9 +61,7 @@ class FakeTelegramClient:
         return dict(self.chat)
 
     def get_chat_member(self, chat: str, user_id: int) -> dict[str, Any]:
-        self.calls.append(
-            _Call("get_chat_member", {"chat": chat, "user_id": user_id})
-        )
+        self.calls.append(_Call("get_chat_member", {"chat": chat, "user_id": user_id}))
         self._maybe_raise("get_chat_member")
         return dict(self.bot_member)
 
@@ -112,7 +108,5 @@ class FakeTelegramClient:
         self._maybe_raise("pin_chat_message")
 
     def unpin_chat_message(self, chat: str, message_id: int | None) -> None:
-        self.calls.append(
-            _Call("unpin_chat_message", {"chat": chat, "message_id": message_id})
-        )
+        self.calls.append(_Call("unpin_chat_message", {"chat": chat, "message_id": message_id}))
         self._maybe_raise("unpin_chat_message")
