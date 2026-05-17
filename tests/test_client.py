@@ -18,16 +18,14 @@ def test_client_requires_token():
 
 def test_client_missing_library_raises_clean(monkeypatch):
     """If python-telegram-bot can't import, TelegramClient raises TelekError."""
-    import importlib
     import sys
 
-    from telek.telegram import _client as client_mod
+    from telek.telegram._client import TelegramClient
 
     monkeypatch.setitem(sys.modules, "telegram", None)
-    importlib.reload(client_mod)
 
     with pytest.raises(TelekError) as exc:
-        client_mod.TelegramClient(token="fake")
+        TelegramClient(token="fake")
     assert exc.value.code == EXIT_ENV_ERROR
     assert "python-telegram-bot" in exc.value.message
     assert "telek[telegram]" in exc.value.remediation

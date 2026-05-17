@@ -31,6 +31,8 @@ class FakeTelegramClient:
     bot_member: dict[str, Any] = field(
         default_factory=lambda: {
             "user_id": 42,
+            "username": "fake_bot",
+            "first_name": "Fake",
             "status": "administrator",
             "permissions": {
                 "can_post": True,
