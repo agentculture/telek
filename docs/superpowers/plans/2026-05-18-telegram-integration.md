@@ -46,6 +46,7 @@
 ## Task 1: Config — token loading, `.env` discovery, redaction
 
 **Files:**
+
 - Create: `telek/telegram/__init__.py`
 - Create: `telek/telegram/_config.py`
 - Create: `tests/test_config.py`
@@ -291,6 +292,7 @@ EOF
 ## Task 2: Error mapping
 
 **Files:**
+
 - Create: `telek/telegram/_errors.py`
 - Create: `tests/test_errors.py`
 
@@ -529,6 +531,7 @@ EOF
 ## Task 3: `ValidatedPlan` dataclass + verb intents
 
 **Files:**
+
 - Create: `telek/telegram/_plan.py`
 - Create: `tests/test_plan.py`
 - Modify: `telek/telegram/__init__.py`
@@ -804,6 +807,7 @@ EOF
 ## Task 4: `TelegramClient` sync façade + FakeTelegramClient fixture
 
 **Files:**
+
 - Create: `telek/telegram/_client.py`
 - Create: `tests/fakes.py`
 - Modify: `telek/telegram/__init__.py`
@@ -1171,6 +1175,7 @@ EOF
 ## Task 5: `telek bot send` CLI verb
 
 **Files:**
+
 - Create: `telek/cli/_commands/bot.py`
 - Modify: `telek/cli/__init__.py:51-66`
 - Create: `tests/test_telegram_cli.py`
@@ -1504,6 +1509,7 @@ EOF
 ## Task 6: `telek group roster` + `telek group pin` CLI verbs
 
 **Files:**
+
 - Create: `telek/cli/_commands/group.py`
 - Modify: `telek/cli/__init__.py` — register `group` group
 - Modify: `tests/test_telegram_cli.py` — append roster + pin tests
@@ -1818,6 +1824,7 @@ EOF
 ## Task 7: Optional dependency declaration
 
 **Files:**
+
 - Modify: `pyproject.toml` (add `[project.optional-dependencies]` section)
 
 - [ ] **Step 1: Add the optional extra**
@@ -1887,6 +1894,7 @@ EOF
 ## Task 8: Vendored `.claude/skills/telegram/` wrapper
 
 **Files:**
+
 - Create: `.claude/skills/telegram/SKILL.md`
 - Create: `.claude/skills/telegram/scripts/send.sh`
 - Create: `.claude/skills/telegram/scripts/roster.sh`
@@ -2064,6 +2072,7 @@ EOF
 ## Task 9: README + CHANGELOG + version bump
 
 **Files:**
+
 - Modify: `README.md`
 - Modify: `CHANGELOG.md`
 - Modify: `pyproject.toml` (version: `0.1.0` → `0.2.0`)
@@ -2085,7 +2094,7 @@ default; pass `--apply` to commit.
 
 Find the `## Usage` section. After the existing usage block, append a new subsection:
 
-```markdown
+````markdown
 ### Telegram verbs (requires `pip install 'telek[telegram]'`)
 
 ```bash
@@ -2100,7 +2109,7 @@ telek bot send --chat @announcements --text "hello" --apply
 telek group pin --chat @announcements --message 123 --apply
 telek group pin --chat @announcements --unpin --apply
 ```
-```
+````
 
 - [ ] **Step 3: Update `README.md` — Configuration section**
 
@@ -2164,6 +2173,7 @@ uv run telek --version
 ```
 
 Expected:
+
 - pytest: all tests pass, coverage ≥ 60%.
 - black / isort / flake8 / bandit: clean.
 - `telek --version`: prints `telek 0.2.0`.
@@ -2241,5 +2251,6 @@ Expected: PR opened against `main` from `design/telegram-integration`.
 **Type consistency:** `bot_self` shape is `{user_id, status, permissions}` everywhere (Task 3 dataclass, Task 4 client serializer, Tasks 5/6 `_bot_self_dict`). `ValidatedPlan` constructor signature matches across all three callsites. `FakeTelegramClient` method signatures match `TelegramClient` real methods (`get_me`, `get_chat`, `get_chat_member`, `get_chat_member_count`, `get_chat_administrators`, `send_message`, `pin_chat_message`, `unpin_chat_message`). `_build_client` factory is the seam tests patch — defined identically in `bot.py` and `group.py`.
 
 **Manual verification (optional, after merge):**
+
 - With Playwright MCP + an open Telegram session, verify the `--apply` paths land messages / pins as expected in a test group.
 - Verify `--json` payloads round-trip through `jq` cleanly.

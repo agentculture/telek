@@ -28,7 +28,7 @@ jobs:
 
       - run: uv python install 3.12
 
-      - run: uv sync
+      - run: uv sync --extra telegram
 
       - run: uv run pytest -n auto --cov=telek --cov-report=xml:coverage.xml --cov-report=term -v
 
