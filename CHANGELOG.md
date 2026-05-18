@@ -27,7 +27,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   the full `bot send` / `group roster` / `group pin` cycle against the
   real Telegram Bot API. Gated on `TELEK_LIVE_TEST_USER_CHAT` and
   `TELEK_LIVE_TEST_GROUP_CHAT`; skipped automatically when either is
-  unset, so CI is unaffected.
+  unset.
+- `live-smoke` CI job in `.github/workflows/tests.yml` that runs the live
+  suite against repo secrets (`TELEK_BOT_TOKEN`, `TELEK_LIVE_TEST_USER_CHAT`,
+  `TELEK_LIVE_TEST_GROUP_CHAT`). Gated on the token's presence so fork PRs
+  and unconfigured repos are a no-op rather than a hard fail.
 
 ### Notes
 
