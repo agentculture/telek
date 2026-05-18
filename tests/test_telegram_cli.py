@@ -82,6 +82,7 @@ def test_bot_send_parse_mode_defaults_to_none(fake, capsys):
 
 def test_bot_send_missing_token_exits_env_error(monkeypatch, capsys):
     monkeypatch.delenv("TELEK_BOT_TOKEN", raising=False)
+    monkeypatch.setattr("telek.cli._commands.bot.load_token", lambda: None)
     rc = main(["bot", "send", "--chat", "@x", "--text", "hi"])
     assert rc == EXIT_ENV_ERROR
 
