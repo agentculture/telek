@@ -40,14 +40,14 @@ def _parse_env_file(path: Path) -> dict[str, str]:
     return result
 
 
-def _is_world_writable(path: Path) -> bool:
+def _is_world_or_group_writable(path: Path) -> bool:
     if os.name != "posix":
         return False
     try:
         mode = path.stat().st_mode
     except OSError:
         return False
-    return bool(mode & stat.S_IWOTH)
+    return bool(mode & (stat.S_IWGRP | stat.S_IWOTH))
 
 
 def _find_dotenv_paths(cwd: Path) -> list[Path]:
@@ -79,8 +79,8 @@ def load_token(cwd: Path | None = None) -> str | None:
 
     base = cwd if cwd is not None else Path.cwd()
     for env_path in _find_dotenv_paths(base):
-        if _is_world_writable(env_path):
-            emit_diagnostic(f"warning: {env_path} is world-writable; skipping for safety")
+        if _is_world_or_group_writable(env_path):
+            emit_diagnostic(f"warning: {env_path} is world- or group-writable; skipping for safety")
             continue
         parsed = _parse_env_file(env_path)
         if TOKEN_ENV_VAR in parsed and parsed[TOKEN_ENV_VAR]:

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
+set -euo pipefail
 # Pin or unpin via `telek group pin`. Defaults to --json.
 # Pass --apply to actually (un)pin (dry-run otherwise).
-set -euo pipefail
 
 for arg in "$@"; do
   if [[ "$arg" == "--apply" ]]; then

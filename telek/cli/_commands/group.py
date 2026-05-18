@@ -46,7 +46,7 @@ def _shared_probes(
 # roster
 
 
-def _run_roster(args: argparse.Namespace) -> int:
+def _run_roster(args: argparse.Namespace) -> None:
     token = load_token()
     client = _build_client(token)
     me, chat, member = _shared_probes(client, args.chat, token)
@@ -67,7 +67,6 @@ def _run_roster(args: argparse.Namespace) -> int:
         dry_run=False,
     )
     emit_result(plan.to_dict(), json_mode=args.json)
-    return 0
 
 
 # pin
@@ -107,7 +106,7 @@ def _validate_pin(
     )
 
 
-def _run_pin(args: argparse.Namespace) -> int:
+def _run_pin(args: argparse.Namespace) -> None:
     token = load_token()
     client = _build_client(token)
     me, chat, member = _shared_probes(client, args.chat, token)
@@ -115,7 +114,7 @@ def _run_pin(args: argparse.Namespace) -> int:
 
     if not args.apply:
         emit_result(plan.to_dict(), json_mode=args.json)
-        return 0
+        return
 
     try:
         if args.unpin:
@@ -130,7 +129,6 @@ def _run_pin(args: argparse.Namespace) -> int:
     out = plan.to_dict()
     out["dry_run"] = False
     emit_result(out, json_mode=args.json)
-    return 0
 
 
 def register(sub: argparse._SubParsersAction) -> None:

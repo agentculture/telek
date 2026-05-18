@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
+set -euo pipefail
 # Send a Telegram message via `telek bot send`. Defaults to --json.
 # Pass --apply to actually send (dry-run otherwise).
-set -euo pipefail
 
 for arg in "$@"; do
   if [[ "$arg" == "--apply" ]]; then

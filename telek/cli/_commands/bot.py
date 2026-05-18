@@ -92,7 +92,7 @@ def _validate_send(
     return plan, text
 
 
-def _run_send(args: argparse.Namespace) -> int:
+def _run_send(args: argparse.Namespace) -> None:
     token = load_token()
     if not token:
         raise TelekError(
@@ -105,7 +105,7 @@ def _run_send(args: argparse.Namespace) -> int:
 
     if not args.apply:
         emit_result(plan.to_dict(), json_mode=args.json)
-        return 0
+        return
 
     try:
         result = client.send_message(
@@ -124,7 +124,6 @@ def _run_send(args: argparse.Namespace) -> int:
     out["dry_run"] = False
     out["message_id"] = result["message_id"]
     emit_result(out, json_mode=args.json)
-    return 0
 
 
 def register(sub: argparse._SubParsersAction) -> None:

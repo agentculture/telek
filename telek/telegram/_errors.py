@@ -11,6 +11,42 @@ from telek.cli._errors import EXIT_ENV_ERROR, EXIT_USER_ERROR, TelekError
 from telek.telegram._config import redact
 
 
+def _wrap_forbidden(msg: str) -> TelekError:
+    lowered = msg.lower()
+    if "kicked" in lowered or "not a member" in lowered or "blocked" in lowered:
+        return TelekError(
+            code=EXIT_USER_ERROR,
+            message="bot is not in this chat",
+            remediation="add the bot to the chat first",
+        )
+    return TelekError(
+        code=EXIT_USER_ERROR,
+        message=f"forbidden: {msg}",
+        remediation="check the bot has access to this chat",
+    )
+
+
+def _wrap_bad_request(msg: str) -> TelekError:
+    lowered = msg.lower()
+    if "chat not found" in lowered:
+        return TelekError(
+            code=EXIT_USER_ERROR,
+            message=f"chat not found: {msg}",
+            remediation="verify id/username; ensure the bot is a member",
+        )
+    if "not enough rights" in lowered or "have no rights" in lowered:
+        return TelekError(
+            code=EXIT_USER_ERROR,
+            message=f"bot lacks required permission: {msg}",
+            remediation="promote the bot and grant the needed permission",
+        )
+    return TelekError(
+        code=EXIT_USER_ERROR,
+        message=msg,
+        remediation="see telegram API docs for details",
+    )
+
+
 def wrap(exc: BaseException, *, token: str | None) -> TelekError:
     """Convert a python-telegram-bot exception into a TelekError."""
     from telegram.error import (
@@ -42,40 +78,12 @@ def wrap(exc: BaseException, *, token: str | None) -> TelekError:
         )
 
     if isinstance(exc, Forbidden):
-        lowered = msg.lower()
-        if "kicked" in lowered or "not a member" in lowered or "blocked" in lowered:
-            return TelekError(
-                code=EXIT_USER_ERROR,
-                message="bot is not in this chat",
-                remediation="add the bot to the chat first",
-            )
-        return TelekError(
-            code=EXIT_USER_ERROR,
-            message=f"forbidden: {msg}",
-            remediation="check the bot has access to this chat",
-        )
+        return _wrap_forbidden(msg)
 
     # BadRequest inherits from NetworkError in python-telegram-bot v21;
     # this branch MUST appear before the NetworkError arm below.
     if isinstance(exc, BadRequest):
-        lowered = msg.lower()
-        if "chat not found" in lowered:
-            return TelekError(
-                code=EXIT_USER_ERROR,
-                message=f"chat not found: {msg}",
-                remediation="verify id/username; ensure the bot is a member",
-            )
-        if "not enough rights" in lowered or "have no rights" in lowered:
-            return TelekError(
-                code=EXIT_USER_ERROR,
-                message=f"bot lacks required permission: {msg}",
-                remediation="promote the bot and grant the needed permission",
-            )
-        return TelekError(
-            code=EXIT_USER_ERROR,
-            message=msg,
-            remediation="see telegram API docs for details",
-        )
+        return _wrap_bad_request(msg)
 
     if isinstance(exc, (NetworkError, TimedOut)):
         return TelekError(
