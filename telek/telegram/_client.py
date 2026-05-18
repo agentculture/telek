@@ -46,7 +46,7 @@ class TelegramClient:
             ) from exc
 
         self._token = token
-        self._Bot = Bot
+        self._bot_class = Bot
 
     def _run(self, coro_fn):
         """Run an async callable that takes a fresh Bot.
@@ -59,7 +59,7 @@ class TelegramClient:
         """
 
         async def _wrapped():
-            async with self._Bot(token=self._token) as bot:
+            async with self._bot_class(token=self._token) as bot:
                 return await coro_fn(bot)
 
         return asyncio.run(_wrapped())
