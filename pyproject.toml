@@ -72,3 +72,6 @@ skips = ["B101", "B404", "B603"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra"
+markers = [
+    "live: tests that hit the real Telegram Bot API (opt-in: set TELEK_LIVE_TEST_USER_CHAT and TELEK_LIVE_TEST_GROUP_CHAT)",
+]

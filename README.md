@@ -67,6 +67,30 @@ current directory, then from a `.env` at the nearest enclosing git root.
 Process env always wins. `.env` files that are world-writable on POSIX are
 skipped with a warning.
 
+## Testing
+
+The unit suite runs offline. Run it with:
+
+```bash
+uv run pytest -v
+```
+
+### Live smoke tests
+
+Optional live tests in `tests/test_telegram_live.py` exercise `bot send` /
+`group roster` / `group pin` / unpin against the real Bot API. Enable by
+exporting two numeric chat IDs the bot can reach:
+
+```bash
+export TELEK_LIVE_TEST_USER_CHAT=<numeric user chat_id>
+export TELEK_LIVE_TEST_GROUP_CHAT=<numeric group chat_id>
+uv run pytest tests/test_telegram_live.py -v
+```
+
+The bot must be a member of the user DM (the user must have started a
+chat with the bot) and a member-admin (with **Pin Messages**) in the
+group. CI does not set these env vars, so live tests skip in CI.
+
 ## Project shape
 
 See [`CLAUDE.md`](./CLAUDE.md) for the directory layout, build / test /

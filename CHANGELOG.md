@@ -23,6 +23,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - New optional dependency: `python-telegram-bot>=21,<22` under
   `[project.optional-dependencies] telegram`. Core install stays
   zero-dep; install with `pip install 'telek[telegram]'`.
+- Live smoke tests (`tests/test_telegram_live.py`, marker `live`) covering
+  the full `bot send` / `group roster` / `group pin` cycle against the
+  real Telegram Bot API. Gated on `TELEK_LIVE_TEST_USER_CHAT` and
+  `TELEK_LIVE_TEST_GROUP_CHAT`; skipped automatically when either is
+  unset, so CI is unaffected.
 
 ### Notes
 
