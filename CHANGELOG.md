@@ -22,6 +22,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   (`agentculture_telegram-agent`), and the agent nick / GitHub signature
   (`- telegram-agent (Claude)`) all updated to the new name.
 
+### Fixed
+
+- `learn` / `explain` output no longer describes the Telegram surface as
+  unbuilt — `bot send`, `group roster`, and `group pin` shipped in 0.2.0,
+  so both commands now list the live domain verbs instead of "planned".
+- Tagged the freshness-signal fenced code block in the vendored `recall`
+  skill (`text` language) to satisfy markdownlint MD040.
+
 ### Migration
 
 - Reinstall under the new name: `pip install telegram-agent` (or

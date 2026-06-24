@@ -3,9 +3,9 @@
 Resolves zero or more path tokens to a short markdown body. Unknown paths
 raise :class:`TelegramAgentError` with a remediation pointing at ``telegram-agent explain``.
 
-Today's catalog covers only the universal verbs (``learn``, ``explain``,
-``whoami``) — domain verbs (``bot``, ``group``) will be added when their
-implementations land.
+Today's catalog covers the universal verbs (``learn``, ``explain``,
+``whoami``) in full; per-verb entries for the live domain verbs (``bot``,
+``group``) are tracked for a follow-up (v0.3+).
 """
 
 from __future__ import annotations
@@ -18,9 +18,9 @@ from telegram_agent.cli._output import emit_result
 _ROOT = """\
 # telegram-agent
 
-Agent-first Telegram community management tools. Today the CLI exposes the
-universal agent-affordance verbs only; the Telegram surface (`bot`,
-`group`) is intentionally absent and lands in a follow-up PR.
+Agent-first Telegram community management tools. The CLI exposes the
+universal agent-affordance verbs plus the live Telegram surface
+(`bot send`, `group roster`, `group pin`); write verbs are dry-run by default.
 
 ## Universal verbs
 
@@ -28,13 +28,22 @@ universal agent-affordance verbs only; the Telegram surface (`bot`,
 - `telegram-agent explain <path>` — markdown docs for any verb path.
 - `telegram-agent whoami` — agent identity + Telegram config status probe.
 
+## Domain verbs (Telegram surface)
+
+- `telegram-agent bot send` — send a message to a chat (dry-run; `--apply` to send).
+- `telegram-agent group roster` — member count, admins, and the bot itself.
+- `telegram-agent group pin` — pin or unpin a message (dry-run; `--apply`).
+
+Per-verb `explain` entries for these land in a follow-up; use `--help` on
+each for now.
+
 ## Conventions
 
 - Every command that produces a listing or report honours `--json`.
 - Errors carry a `{code, message, remediation}` shape; text mode renders as
   `error: ...` + `hint: ...` on stderr.
 - Exit codes: `0` success, `1` user-input error, `2` environment error.
-- Write verbs (when added) will default to dry-run; `--apply` to commit.
+- Write verbs default to dry-run; `--apply` to commit.
 
 See `telegram-agent explain learn`, `telegram-agent explain explain`,
 `telegram-agent explain whoami` for per-verb detail.
@@ -59,8 +68,9 @@ _EXPLAIN = """\
 # telegram-agent explain
 
 Resolves a noun/verb path to markdown. With no arguments, prints the
-top-level overview. With one or more tokens (`telegram-agent explain whoami`,
-`telegram-agent explain bot send` once domain verbs land), prints the per-verb body.
+top-level overview. With one or more tokens (`telegram-agent explain whoami`),
+prints the per-verb body. Per-verb entries for `bot`/`group` land in a
+follow-up.
 
 ## Flags
 
