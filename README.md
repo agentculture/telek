@@ -1,36 +1,36 @@
-# telek
+# telegram-agent
 
 **Agent-first Telegram community management tools.**
 
-`telek` is an [AgentCulture](https://github.com/agentculture) sibling repo.
+`telegram-agent` is an [AgentCulture](https://github.com/agentculture) sibling repo.
 The shape it wears — pyproject layout, CLI conventions, vendored skills, CI
 pipeline — comes from
 [`steward`'s sibling pattern](https://github.com/agentculture/steward/blob/main/docs/sibling-pattern.md).
 
 ## Status
 
-**Alpha.** v0.2 lands the Telegram surface: `telek bot send`,
-`telek group roster`, `telek group pin`. Every write verb is dry-run by
+**Alpha.** v0.2 lands the Telegram surface: `telegram-agent bot send`,
+`telegram-agent group roster`, `telegram-agent group pin`. Every write verb is dry-run by
 default; pass `--apply` to commit.
 
 ## Install
 
 ```bash
-uv tool install telek
+uv tool install telegram-agent
 ```
 
-Then `telek --version` should work on your PATH. `uv tool install` is the
+Then `telegram-agent --version` should work on your PATH. `uv tool install` is the
 supported path — not `pip install`.
 
 ## Usage
 
 ```bash
-telek learn               # structured self-teaching prompt for an agent
-telek learn --json        # same, as a JSON payload
-telek explain             # top-level overview
-telek explain whoami      # per-verb markdown
-telek whoami              # nick + version + bot-token-configured probe
-telek whoami --json       # structured payload
+telegram-agent learn               # structured self-teaching prompt for an agent
+telegram-agent learn --json        # same, as a JSON payload
+telegram-agent explain             # top-level overview
+telegram-agent explain whoami      # per-verb markdown
+telegram-agent whoami              # nick + version + bot-token-configured probe
+telegram-agent whoami --json       # structured payload
 ```
 
 Every command supports `--json` where it produces a listing or report,
@@ -38,26 +38,26 @@ and respects the exit-code policy (`0` success / `1` user error / `2` env
 error). Errors carry a `{code, message, remediation}` shape; text mode
 renders as `error: ...` + `hint: ...` on stderr.
 
-### Telegram verbs (requires `pip install 'telek[telegram]'`)
+### Telegram verbs (requires `pip install 'telegram-agent[telegram]'`)
 
 ```bash
 # read-only: count + admins + bot's own permissions
-telek group roster --chat @announcements --json
+telegram-agent group roster --chat @announcements --json
 
 # write (dry-run by default; --apply to commit)
-telek bot send --chat @announcements --text "hello" --parse-mode markdown
-telek bot send --chat @announcements --text "hello" --apply
+telegram-agent bot send --chat @announcements --text "hello" --parse-mode markdown
+telegram-agent bot send --chat @announcements --text "hello" --apply
 
 # pin / unpin (also dry-run by default)
-telek group pin --chat @announcements --message 123 --apply
-telek group pin --chat @announcements --unpin --apply
+telegram-agent group pin --chat @announcements --message 123 --apply
+telegram-agent group pin --chat @announcements --unpin --apply
 ```
 
 ## Configuration
 
 | Variable           | Purpose                                                        |
 |--------------------|----------------------------------------------------------------|
-| `TELEK_BOT_TOKEN`  | Telegram bot token. Required for write verbs once they land. Never logged. |
+| `TELEGRAM_AGENT_BOT_TOKEN`  | Telegram bot token. Required for write verbs once they land. Never logged. |
 
 Bot tokens, group IDs, and webhook secrets **must never** be committed to
 the repo — keep them in repo secrets or a git-ignored `.env`.
@@ -82,8 +82,8 @@ Optional live tests in `tests/test_telegram_live.py` exercise `bot send` /
 exporting two numeric chat IDs the bot can reach:
 
 ```bash
-export TELEK_LIVE_TEST_USER_CHAT=<numeric user chat_id>
-export TELEK_LIVE_TEST_GROUP_CHAT=<numeric group chat_id>
+export TELEGRAM_AGENT_LIVE_TEST_USER_CHAT=<numeric user chat_id>
+export TELEGRAM_AGENT_LIVE_TEST_GROUP_CHAT=<numeric group chat_id>
 uv run pytest tests/test_telegram_live.py -v
 ```
 
@@ -94,7 +94,7 @@ group. CI does not set these env vars, so live tests skip in CI.
 ## Project shape
 
 See [`CLAUDE.md`](./CLAUDE.md) for the directory layout, build / test /
-publish commands, and the sibling-pattern conventions telek inherits.
+publish commands, and the sibling-pattern conventions telegram-agent inherits.
 
 ## Contributing
 

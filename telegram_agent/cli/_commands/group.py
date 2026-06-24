@@ -1,20 +1,20 @@
-"""`telek group ...` — group-scoped Telegram verbs."""
+"""`telegram-agent group ...` — group-scoped Telegram verbs."""
 
 from __future__ import annotations
 
 import argparse
 from typing import Any
 
-from telek.cli._errors import EXIT_USER_ERROR, TelekError
-from telek.cli._output import emit_result
-from telek.telegram import (
+from telegram_agent.cli._errors import EXIT_USER_ERROR, TelegramAgentError
+from telegram_agent.cli._output import emit_result
+from telegram_agent.telegram import (
     PinIntent,
     RosterIntent,
     TelegramClient,
     ValidatedPlan,
     load_token,
 )
-from telek.telegram._errors import wrap as wrap_telegram_error
+from telegram_agent.telegram._errors import wrap as wrap_telegram_error
 
 
 def _build_client(token: str | None) -> TelegramClient:
@@ -36,7 +36,7 @@ def _shared_probes(
         me = client.get_me()
         chat = client.get_chat(chat_arg)
         member = client.get_chat_member(chat_arg, me["user_id"])
-    except TelekError:
+    except TelegramAgentError:
         raise
     except Exception as exc:
         raise wrap_telegram_error(exc, token=token) from exc
@@ -54,7 +54,7 @@ def _run_roster(args: argparse.Namespace) -> None:
     try:
         count = client.get_chat_member_count(args.chat)
         admins = client.get_chat_administrators(args.chat)
-    except TelekError:
+    except TelegramAgentError:
         raise
     except Exception as exc:
         raise wrap_telegram_error(exc, token=token) from exc
@@ -82,7 +82,7 @@ def _validate_pin(
     message_id = args.message
 
     if action == "pin" and message_id is None:
-        raise TelekError(
+        raise TelegramAgentError(
             code=EXIT_USER_ERROR,
             message="--message is required when pinning",
             remediation="pass --message <id> of the message to pin",
@@ -90,7 +90,7 @@ def _validate_pin(
 
     perms = member.get("permissions") or {}
     if member["status"] != "administrator" or not perms.get("can_pin"):
-        raise TelekError(
+        raise TelegramAgentError(
             code=EXIT_USER_ERROR,
             message="bot lacks can_pin_messages",
             remediation="promote the bot to admin with the pin permission",
@@ -121,7 +121,7 @@ def _run_pin(args: argparse.Namespace) -> None:
             client.unpin_chat_message(chat=args.chat, message_id=args.message)
         else:
             client.pin_chat_message(chat=args.chat, message_id=args.message, silent=args.silent)
-    except TelekError:
+    except TelegramAgentError:
         raise
     except Exception as exc:
         raise wrap_telegram_error(exc, token=token) from exc

@@ -1,4 +1,4 @@
-"""Tests for telek.telegram._config."""
+"""Tests for telegram_agent.telegram._config."""
 
 from __future__ import annotations
 
@@ -7,38 +7,38 @@ from pathlib import Path
 
 import pytest
 
-from telek.telegram._config import load_token, redact
+from telegram_agent.telegram._config import load_token, redact
 
 
 @pytest.fixture(autouse=True)
 def _isolate_env(monkeypatch):
-    monkeypatch.delenv("TELEK_BOT_TOKEN", raising=False)
+    monkeypatch.delenv("TELEGRAM_AGENT_BOT_TOKEN", raising=False)
 
 
 def test_load_token_from_environ(monkeypatch):
-    monkeypatch.setenv("TELEK_BOT_TOKEN", "env-token-123")
+    monkeypatch.setenv("TELEGRAM_AGENT_BOT_TOKEN", "env-token-123")
     assert load_token(cwd=Path("/tmp")) == "env-token-123"
 
 
 def test_load_token_from_dotenv_in_cwd(tmp_path, monkeypatch):
     env_file = tmp_path / ".env"
-    env_file.write_text("TELEK_BOT_TOKEN=cwd-token\n")
+    env_file.write_text("TELEGRAM_AGENT_BOT_TOKEN=cwd-token\n")
     if os.name == "posix":
         env_file.chmod(0o600)
-    monkeypatch.delenv("TELEK_BOT_TOKEN", raising=False)
+    monkeypatch.delenv("TELEGRAM_AGENT_BOT_TOKEN", raising=False)
     assert load_token(cwd=tmp_path) == "cwd-token"
 
 
 def test_load_token_environ_wins_over_dotenv(tmp_path, monkeypatch):
-    (tmp_path / ".env").write_text("TELEK_BOT_TOKEN=file-token\n")
-    monkeypatch.setenv("TELEK_BOT_TOKEN", "env-token")
+    (tmp_path / ".env").write_text("TELEGRAM_AGENT_BOT_TOKEN=file-token\n")
+    monkeypatch.setenv("TELEGRAM_AGENT_BOT_TOKEN", "env-token")
     assert load_token(cwd=tmp_path) == "env-token"
 
 
 def test_load_token_walks_up_to_git_root(tmp_path, monkeypatch):
     (tmp_path / ".git").mkdir()
     env_file = tmp_path / ".env"
-    env_file.write_text("TELEK_BOT_TOKEN=root-token\n")
+    env_file.write_text("TELEGRAM_AGENT_BOT_TOKEN=root-token\n")
     if os.name == "posix":
         env_file.chmod(0o600)
     nested = tmp_path / "a" / "b" / "c"
@@ -52,7 +52,7 @@ def test_load_token_missing_returns_none(tmp_path):
 
 def test_dotenv_quoted_value(tmp_path):
     env_file = tmp_path / ".env"
-    env_file.write_text('TELEK_BOT_TOKEN="quoted value"\n')
+    env_file.write_text('TELEGRAM_AGENT_BOT_TOKEN="quoted value"\n')
     if os.name == "posix":
         env_file.chmod(0o600)
     assert load_token(cwd=tmp_path) == "quoted value"
@@ -60,7 +60,7 @@ def test_dotenv_quoted_value(tmp_path):
 
 def test_dotenv_malformed_line_skipped(tmp_path):
     env_file = tmp_path / ".env"
-    env_file.write_text("not a key value line\nTELEK_BOT_TOKEN=ok\n")
+    env_file.write_text("not a key value line\nTELEGRAM_AGENT_BOT_TOKEN=ok\n")
     if os.name == "posix":
         env_file.chmod(0o600)
     assert load_token(cwd=tmp_path) == "ok"
@@ -68,7 +68,7 @@ def test_dotenv_malformed_line_skipped(tmp_path):
 
 def test_dotenv_comments_and_blanks_ignored(tmp_path):
     env_file = tmp_path / ".env"
-    env_file.write_text("# comment\n\nTELEK_BOT_TOKEN=ok\n")
+    env_file.write_text("# comment\n\nTELEGRAM_AGENT_BOT_TOKEN=ok\n")
     if os.name == "posix":
         env_file.chmod(0o600)
     assert load_token(cwd=tmp_path) == "ok"
@@ -77,7 +77,7 @@ def test_dotenv_comments_and_blanks_ignored(tmp_path):
 @pytest.mark.skipif(os.name != "posix", reason="POSIX permission bits required")
 def test_dotenv_world_or_group_writable_is_skipped(tmp_path, capsys):
     env_file = tmp_path / ".env"
-    env_file.write_text("TELEK_BOT_TOKEN=insecure\n")
+    env_file.write_text("TELEGRAM_AGENT_BOT_TOKEN=insecure\n")
     env_file.chmod(0o646)
     assert load_token(cwd=tmp_path) is None
     err = capsys.readouterr().err
@@ -87,7 +87,7 @@ def test_dotenv_world_or_group_writable_is_skipped(tmp_path, capsys):
 @pytest.mark.skipif(os.name != "posix", reason="POSIX permission bits required")
 def test_dotenv_group_writable_is_skipped(tmp_path, capsys):
     env_file = tmp_path / ".env"
-    env_file.write_text("TELEK_BOT_TOKEN=group-insecure\n")
+    env_file.write_text("TELEGRAM_AGENT_BOT_TOKEN=group-insecure\n")
     env_file.chmod(0o664)
     assert load_token(cwd=tmp_path) is None
     err = capsys.readouterr().err

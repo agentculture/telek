@@ -2,7 +2,7 @@
 
 CLI verbs stay synchronous (matching the existing learn/explain/whoami
 pattern) by wrapping each async Bot method with asyncio.run. The lib is
-imported lazily inside __init__ so `telek --help` and the non-Telegram
+imported lazily inside __init__ so `telegram-agent --help` and the non-Telegram
 verbs work without the optional dep installed.
 
 Each public method creates a fresh Bot instance via `async with
@@ -20,7 +20,7 @@ from __future__ import annotations
 import asyncio
 from typing import Any
 
-from telek.cli._errors import EXIT_ENV_ERROR, TelekError
+from telegram_agent.cli._errors import EXIT_ENV_ERROR, TelegramAgentError
 
 
 class TelegramClient:
@@ -28,21 +28,21 @@ class TelegramClient:
 
     def __init__(self, token: str | None) -> None:
         if not token:
-            raise TelekError(
+            raise TelegramAgentError(
                 code=EXIT_ENV_ERROR,
-                message="TELEK_BOT_TOKEN not set",
+                message="TELEGRAM_AGENT_BOT_TOKEN not set",
                 remediation=(
-                    "set TELEK_BOT_TOKEN in your environment or a local .env file "
+                    "set TELEGRAM_AGENT_BOT_TOKEN in your environment or a local .env file "
                     "(get the token from @BotFather)"
                 ),
             )
         try:
             from telegram import Bot
         except ImportError as exc:
-            raise TelekError(
+            raise TelegramAgentError(
                 code=EXIT_ENV_ERROR,
                 message="python-telegram-bot not installed",
-                remediation="pip install 'telek[telegram]'",
+                remediation="pip install 'telegram-agent[telegram]'",
             ) from exc
 
         self._token = token

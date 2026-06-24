@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-# Pin or unpin via `telek group pin`. Defaults to --json.
+# Pin or unpin via `telegram-agent group pin`. Defaults to --json.
 # Pass --apply to actually (un)pin (dry-run otherwise).
 
 for arg in "$@"; do
@@ -11,4 +11,4 @@ for arg in "$@"; do
   fi
 done
 
-exec uv run telek group pin --json "$@"
+exec uv run telegram-agent group pin --json "$@"

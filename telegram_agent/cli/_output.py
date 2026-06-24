@@ -1,7 +1,7 @@
 """stdout / stderr helpers with a strict split.
 
 Rule: **results go to stdout, diagnostics and errors go to stderr.** Agents
-parsing telek output can rely on this invariant. JSON mode routes structured
+parsing telegram-agent output can rely on this invariant. JSON mode routes structured
 payloads to the same streams — never mixes them.
 """
 
@@ -11,7 +11,7 @@ import json
 import sys
 from typing import Any, TextIO
 
-from telek.cli._errors import TelekError
+from telegram_agent.cli._errors import TelegramAgentError
 
 
 def emit_result(data: Any, *, json_mode: bool, stream: TextIO | None = None) -> None:
@@ -32,8 +32,8 @@ def emit_result(data: Any, *, json_mode: bool, stream: TextIO | None = None) -> 
         s.write("\n")
 
 
-def emit_error(err: TelekError, *, json_mode: bool, stream: TextIO | None = None) -> None:
-    """Write a :class:`TelekError` to stderr.
+def emit_error(err: TelegramAgentError, *, json_mode: bool, stream: TextIO | None = None) -> None:
+    """Write a :class:`TelegramAgentError` to stderr.
 
     Text mode renders as two lines when a remediation is present::
 

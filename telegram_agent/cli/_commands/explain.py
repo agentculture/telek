@@ -1,7 +1,7 @@
-"""``telek explain <path>...`` — markdown catalog lookup.
+"""``telegram-agent explain <path>...`` — markdown catalog lookup.
 
 Resolves zero or more path tokens to a short markdown body. Unknown paths
-raise :class:`TelekError` with a remediation pointing at ``telek explain``.
+raise :class:`TelegramAgentError` with a remediation pointing at ``telegram-agent explain``.
 
 Today's catalog covers only the universal verbs (``learn``, ``explain``,
 ``whoami``) — domain verbs (``bot``, ``group``) will be added when their
@@ -12,11 +12,11 @@ from __future__ import annotations
 
 import argparse
 
-from telek.cli._errors import EXIT_USER_ERROR, TelekError
-from telek.cli._output import emit_result
+from telegram_agent.cli._errors import EXIT_USER_ERROR, TelegramAgentError
+from telegram_agent.cli._output import emit_result
 
 _ROOT = """\
-# telek
+# telegram-agent
 
 Agent-first Telegram community management tools. Today the CLI exposes the
 universal agent-affordance verbs only; the Telegram surface (`bot`,
@@ -24,9 +24,9 @@ universal agent-affordance verbs only; the Telegram surface (`bot`,
 
 ## Universal verbs
 
-- `telek learn` — self-teaching prompt (text or `--json`).
-- `telek explain <path>` — markdown docs for any verb path.
-- `telek whoami` — agent identity + Telegram config status probe.
+- `telegram-agent learn` — self-teaching prompt (text or `--json`).
+- `telegram-agent explain <path>` — markdown docs for any verb path.
+- `telegram-agent whoami` — agent identity + Telegram config status probe.
 
 ## Conventions
 
@@ -36,14 +36,14 @@ universal agent-affordance verbs only; the Telegram surface (`bot`,
 - Exit codes: `0` success, `1` user-input error, `2` environment error.
 - Write verbs (when added) will default to dry-run; `--apply` to commit.
 
-See `telek explain learn`, `telek explain explain`, `telek explain whoami`
-for per-verb detail.
+See `telegram-agent explain learn`, `telegram-agent explain explain`,
+`telegram-agent explain whoami` for per-verb detail.
 """
 
 _LEARN = """\
-# telek learn
+# telegram-agent learn
 
-Prints a structured self-teaching prompt describing telek's purpose, verb
+Prints a structured self-teaching prompt describing telegram-agent's purpose, verb
 map, exit-code policy, and `--json` support. The output is stable enough
 that an agent can read it and author its own usage skill without parsing
 `--help`.
@@ -56,11 +56,11 @@ that an agent can read it and author its own usage skill without parsing
 """
 
 _EXPLAIN = """\
-# telek explain
+# telegram-agent explain
 
 Resolves a noun/verb path to markdown. With no arguments, prints the
-top-level overview. With one or more tokens (`telek explain whoami`,
-`telek explain bot send` once domain verbs land), prints the per-verb body.
+top-level overview. With one or more tokens (`telegram-agent explain whoami`,
+`telegram-agent explain bot send` once domain verbs land), prints the per-verb body.
 
 ## Flags
 
@@ -69,17 +69,17 @@ top-level overview. With one or more tokens (`telek explain whoami`,
 ## Errors
 
 Unknown paths exit `1` with `error: unknown path: <tokens>` and a hint
-pointing back at `telek explain`.
+pointing back at `telegram-agent explain`.
 """
 
 _WHOAMI = """\
-# telek whoami
+# telegram-agent whoami
 
 The smallest auth probe. Reports:
 
-- `nick` — agent suffix from `culture.yaml` (falls back to `telek`).
-- `version` — `telek.__version__`.
-- `bot_token_configured` — boolean: is `TELEK_BOT_TOKEN` set in the
+- `nick` — agent suffix from `culture.yaml` (falls back to `telegram-agent`).
+- `version` — `telegram_agent.__version__`.
+- `bot_token_configured` — boolean: is `TELEGRAM_AGENT_BOT_TOKEN` set in the
   environment? The token itself is **never** printed or logged.
 
 Use this to verify (without contacting Telegram) that the environment is
@@ -93,7 +93,7 @@ field on the report, not an error.
 
 _CATALOG: dict[tuple[str, ...], str] = {
     (): _ROOT,
-    ("telek",): _ROOT,
+    ("telegram-agent",): _ROOT,
     ("learn",): _LEARN,
     ("explain",): _EXPLAIN,
     ("whoami",): _WHOAMI,
@@ -103,10 +103,10 @@ _CATALOG: dict[tuple[str, ...], str] = {
 def resolve(path: tuple[str, ...]) -> str:
     body = _CATALOG.get(path)
     if body is None:
-        raise TelekError(
+        raise TelegramAgentError(
             code=EXIT_USER_ERROR,
             message=f"unknown path: {' '.join(path) or '(empty)'}",
-            remediation="run 'telek explain' for the top-level map",
+            remediation="run 'telegram-agent explain' for the top-level map",
         )
     return body
 
@@ -125,12 +125,12 @@ def cmd_explain(args: argparse.Namespace) -> int:
 def register(sub: argparse._SubParsersAction) -> None:
     p = sub.add_parser(
         "explain",
-        help="Print markdown docs for a noun/verb path (e.g. 'telek explain whoami').",
+        help="Print markdown docs for a noun/verb path (e.g. 'telegram-agent explain whoami').",
     )
     p.add_argument(
         "path",
         nargs="*",
-        help="Command path tokens; empty = root (same as 'telek').",
+        help="Command path tokens; empty = root (same as 'telegram-agent').",
     )
     p.add_argument("--json", action="store_true", help="Emit structured JSON.")
     p.set_defaults(func=cmd_explain)
