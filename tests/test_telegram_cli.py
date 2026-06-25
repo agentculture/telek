@@ -1,4 +1,4 @@
-"""CLI smoke tests for telek bot/group verbs."""
+"""CLI smoke tests for telegram-agent bot/group verbs."""
 
 from __future__ import annotations
 
@@ -7,8 +7,8 @@ from typing import Any
 
 import pytest
 
-from telek.cli import main
-from telek.cli._errors import EXIT_ENV_ERROR, EXIT_USER_ERROR
+from telegram_agent.cli import main
+from telegram_agent.cli._errors import EXIT_ENV_ERROR, EXIT_USER_ERROR
 from tests.fakes import FakeTelegramClient
 
 pytest.importorskip("telegram")
@@ -18,13 +18,13 @@ from telegram.error import BadRequest  # noqa: E402
 @pytest.fixture
 def fake(monkeypatch) -> FakeTelegramClient:
     client = FakeTelegramClient()
-    monkeypatch.setenv("TELEK_BOT_TOKEN", "fake-token")
+    monkeypatch.setenv("TELEGRAM_AGENT_BOT_TOKEN", "fake-token")
     monkeypatch.setattr(
-        "telek.cli._commands.bot._build_client",
+        "telegram_agent.cli._commands.bot._build_client",
         lambda token: client,
     )
     monkeypatch.setattr(
-        "telek.cli._commands.group._build_client",
+        "telegram_agent.cli._commands.group._build_client",
         lambda token: client,
     )
     return client
@@ -81,8 +81,8 @@ def test_bot_send_parse_mode_defaults_to_none(fake, capsys):
 
 
 def test_bot_send_missing_token_exits_env_error(monkeypatch, capsys):
-    monkeypatch.delenv("TELEK_BOT_TOKEN", raising=False)
-    monkeypatch.setattr("telek.cli._commands.bot.load_token", lambda: None)
+    monkeypatch.delenv("TELEGRAM_AGENT_BOT_TOKEN", raising=False)
+    monkeypatch.setattr("telegram_agent.cli._commands.bot.load_token", lambda: None)
     rc = main(["bot", "send", "--chat", "@x", "--text", "hi"])
     assert rc == EXIT_ENV_ERROR
 

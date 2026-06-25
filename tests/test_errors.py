@@ -1,11 +1,11 @@
-"""Tests for telek.telegram._errors.wrap()."""
+"""Tests for telegram_agent.telegram._errors.wrap()."""
 
 from __future__ import annotations
 
 import pytest
 
-from telek.cli._errors import EXIT_ENV_ERROR, EXIT_USER_ERROR
-from telek.telegram._errors import wrap
+from telegram_agent.cli._errors import EXIT_ENV_ERROR, EXIT_USER_ERROR
+from telegram_agent.telegram._errors import wrap
 
 telegram = pytest.importorskip("telegram")
 from telegram.error import (  # noqa: E402

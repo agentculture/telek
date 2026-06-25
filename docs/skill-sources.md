@@ -15,7 +15,7 @@ The canonical map across the whole AgentCulture mesh lives at
 | `run-tests`     | [`steward/.claude/skills/run-tests/`](https://github.com/agentculture/steward/tree/main/.claude/skills/run-tests)       | 0.1.0       | None (initial vendor). |
 | `sonarclaude`   | [`steward/.claude/skills/sonarclaude/`](https://github.com/agentculture/steward/tree/main/.claude/skills/sonarclaude)   | 0.1.0       | None (initial vendor). |
 | `version-bump`  | [`steward/.claude/skills/version-bump/`](https://github.com/agentculture/steward/tree/main/.claude/skills/version-bump) | 0.1.0       | None (initial vendor). |
-| `telegram`      | Original to telek — no upstream.                                                                                         | v0.2        | N/A (original).        |
+| `telegram`      | Original to telegram-agent — no upstream.                                                                                         | v0.2        | N/A (original).        |
 
 ## Re-sync procedure
 

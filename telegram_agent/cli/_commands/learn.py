@@ -1,4 +1,4 @@
-"""``telek learn`` — the learnability affordance.
+"""``telegram-agent learn`` — the learnability affordance.
 
 Prints a structured self-teaching prompt so an agent can author its own
 usage skill without scraping ``--help``. Supports ``--json``.
@@ -8,33 +8,35 @@ from __future__ import annotations
 
 import argparse
 
-from telek import __version__
-from telek.cli._output import emit_result
+from telegram_agent import __version__
+from telegram_agent.cli._output import emit_result
 
 _TEXT = """\
-telek — agent-first Telegram community management tools.
+telegram-agent — agent-first Telegram community management tools.
 
 Purpose
 -------
 Provide an agent-first surface (CLI today; MCP/HTTP later) for moderating
 and operating Telegram communities — group rosters, message moderation,
-pinned-post hygiene, scheduled announcements. Today's release is the
-scaffold: no Telegram surface is wired up yet; the universal verbs work.
+pinned-post hygiene, scheduled announcements. The Telegram surface (`bot`,
+`group`) is live; scheduled announcements and moderation rules are planned.
 
 Universal verbs (agent-first)
 -----------------------------
-  telek learn              Print this self-teaching prompt. Supports --json.
-  telek explain <path>...  Print docs for a noun/verb path. Supports --json.
-  telek whoami             Report agent identity + Telegram config status.
+  telegram-agent learn              Print this self-teaching prompt. Supports --json.
+  telegram-agent explain <path>...  Print docs for a noun/verb path. Supports --json.
+  telegram-agent whoami             Report agent identity + Telegram config status.
                            Supports --json.
 
-Domain verbs (planned)
-----------------------
-A `telek bot ...` and `telek group ...` noun-group will land in a follow-up
-PR. **Mutation safety:** every write verb defaults to dry-run; pass
-`--apply` to actually send a message, kick a member, pin a post, etc. This
-is load-bearing — agents call CLIs in loops, so safe-by-default is the
-contract, not an option.
+Domain verbs (Telegram surface)
+-------------------------------
+  telegram-agent bot send      Send a message to a chat. Dry-run; --apply to send.
+  telegram-agent group roster  List member count, admins, and the bot itself.
+  telegram-agent group pin     Pin or unpin a message. Dry-run; --apply to commit.
+
+**Mutation safety:** every write verb defaults to dry-run; pass `--apply`
+to actually send a message, pin a post, etc. This is load-bearing — agents
+call CLIs in loops, so safe-by-default is the contract, not an option.
 
 Machine-readable output
 -----------------------
@@ -46,27 +48,27 @@ Exit-code policy
 ----------------
   0 success
   1 user-input error (bad flag, bad path, missing arg)
-  2 environment / setup error (TELEK_BOT_TOKEN missing, unreadable file)
+  2 environment / setup error (TELEGRAM_AGENT_BOT_TOKEN missing, unreadable file)
   3+ reserved
 
 Environment
 -----------
-  TELEK_BOT_TOKEN   Telegram bot token. Required for write verbs once they
+  TELEGRAM_AGENT_BOT_TOKEN   Telegram bot token. Required for write verbs once they
                     land. Never logged, never echoed.
 
 More detail
 -----------
-  telek explain telek
-  telek explain learn
-  telek explain whoami
+  telegram-agent explain telegram-agent
+  telegram-agent explain learn
+  telegram-agent explain whoami
 
-Homepage: https://github.com/agentculture/telek
+Homepage: https://github.com/agentculture/telegram-agent
 """
 
 
 def _as_json_payload() -> dict[str, object]:
     return {
-        "tool": "telek",
+        "tool": "telegram-agent",
         "version": __version__,
         "purpose": (
             "Agent-first Telegram community management — moderation, roster, "
@@ -79,6 +81,9 @@ def _as_json_payload() -> dict[str, object]:
                 "path": ["whoami"],
                 "summary": "Report agent nick, version, Telegram config status.",
             },
+            {"path": ["bot", "send"], "summary": "Send a message (dry-run; --apply)."},
+            {"path": ["group", "roster"], "summary": "Member count, admins, bot self."},
+            {"path": ["group", "pin"], "summary": "Pin/unpin a message (dry-run; --apply)."},
         ],
         "exit_codes": {
             "0": "success",
@@ -86,13 +91,13 @@ def _as_json_payload() -> dict[str, object]:
             "2": "environment/setup error",
         },
         "json_support": True,
-        "explain_pointer": "telek explain <path> (e.g. 'telek explain whoami')",
+        "explain_pointer": "telegram-agent explain <path> (e.g. 'telegram-agent explain whoami')",
         "env": {
-            "TELEK_BOT_TOKEN": (  # nosec B105 - env var name, not a credential
+            "TELEGRAM_AGENT_BOT_TOKEN": (  # nosec B105 - env var name, not a credential
                 "Telegram bot token. Required once write verbs land. Never logged."
             ),
         },
-        "mutation_safety": ("Every write verb will default to dry-run; pass --apply to commit."),
+        "mutation_safety": ("Every write verb defaults to dry-run; pass --apply to commit."),
     }
 
 

@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Land the three v0.2 Telegram verbs (`telek bot send`, `telek group roster`, `telek group pin`) behind a sync façade over `python-telegram-bot`, dry-run by default with validated-preview semantics, `.env`-aware token loading with redaction, and a vendored `.claude/skills/telegram/` wrapper.
+**Goal:** Land the three v0.2 Telegram verbs (`telegram-agent bot send`, `telegram-agent group roster`, `telegram-agent group pin`) behind a sync façade over `python-telegram-bot`, dry-run by default with validated-preview semantics, `.env`-aware token loading with redaction, and a vendored `.claude/skills/telegram/` wrapper.
 
-**Architecture:** New `telek/telegram/` package owns Bot API work behind a small `TelegramClient` sync façade (asyncio.run over python-telegram-bot v21). CLI verbs in `telek/cli/_commands/bot.py` + `group.py` build a request, call `client.validate(plan)` to run read-only probes, then either print the validated plan (dry-run) or call the verb's mutation method (`--apply`). All errors funnel through `_errors.wrap()` → `TelekError`. Tests inject a `FakeTelegramClient` via dependency injection — no network mocks.
+**Architecture:** New `telegram_agent/telegram/` package owns Bot API work behind a small `TelegramClient` sync façade (asyncio.run over python-telegram-bot v21). CLI verbs in `telegram_agent/cli/_commands/bot.py` + `group.py` build a request, call `client.validate(plan)` to run read-only probes, then either print the validated plan (dry-run) or call the verb's mutation method (`--apply`). All errors funnel through `_errors.wrap()` → `TelegramAgentError`. Tests inject a `FakeTelegramClient` via dependency injection — no network mocks.
 
 **Tech Stack:** Python ≥3.12, hatchling, argparse (existing), `python-telegram-bot>=21,<22` (new optional dep), pytest, no other runtime deps.
 
@@ -16,30 +16,30 @@
 
 **New files:**
 
-- `telek/telegram/__init__.py` — re-exports public API (`TelegramClient`, `load_token`, `redact`, `ValidatedPlan`).
-- `telek/telegram/_config.py` — `load_token()`, `_parse_env_file()`, `redact()`, `_find_dotenv_paths()`.
-- `telek/telegram/_errors.py` — `wrap(exc) -> TelekError` mapping table.
-- `telek/telegram/_plan.py` — `ValidatedPlan` dataclass + verb-specific `Intent` dataclasses + `to_dict()` serialization.
-- `telek/telegram/_client.py` — `TelegramClient` sync façade with lazy `python-telegram-bot` import; defines `TelegramClientProtocol` for typing.
-- `telek/cli/_commands/bot.py` — `register(sub)` + `_run_send(args)` for `telek bot send`.
-- `telek/cli/_commands/group.py` — `register(sub)` + `_run_roster(args)` + `_run_pin(args)` for `telek group ...`.
+- `telegram_agent/telegram/__init__.py` — re-exports public API (`TelegramClient`, `load_token`, `redact`, `ValidatedPlan`).
+- `telegram_agent/telegram/_config.py` — `load_token()`, `_parse_env_file()`, `redact()`, `_find_dotenv_paths()`.
+- `telegram_agent/telegram/_errors.py` — `wrap(exc) -> TelegramAgentError` mapping table.
+- `telegram_agent/telegram/_plan.py` — `ValidatedPlan` dataclass + verb-specific `Intent` dataclasses + `to_dict()` serialization.
+- `telegram_agent/telegram/_client.py` — `TelegramClient` sync façade with lazy `python-telegram-bot` import; defines `TelegramClientProtocol` for typing.
+- `telegram_agent/cli/_commands/bot.py` — `register(sub)` + `_run_send(args)` for `telegram-agent bot send`.
+- `telegram_agent/cli/_commands/group.py` — `register(sub)` + `_run_roster(args)` + `_run_pin(args)` for `telegram-agent group ...`.
 - `tests/fakes.py` — `FakeTelegramClient` test double (recorded calls + canned returns).
 - `tests/test_config.py` — token loading, .env precedence, redaction.
 - `tests/test_errors.py` — `wrap()` mapping for each exception class.
 - `tests/test_plan.py` — `ValidatedPlan.to_dict()` JSON shape per verb.
 - `tests/test_telegram_cli.py` — CLI smoke for all three verbs (dry-run + --apply paths).
 - `.claude/skills/telegram/SKILL.md` — agent-facing usage doc.
-- `.claude/skills/telegram/scripts/send.sh` — wraps `telek bot send`.
-- `.claude/skills/telegram/scripts/roster.sh` — wraps `telek group roster`.
-- `.claude/skills/telegram/scripts/pin.sh` — wraps `telek group pin`.
+- `.claude/skills/telegram/scripts/send.sh` — wraps `telegram-agent bot send`.
+- `.claude/skills/telegram/scripts/roster.sh` — wraps `telegram-agent group roster`.
+- `.claude/skills/telegram/scripts/pin.sh` — wraps `telegram-agent group pin`.
 
 **Modified files:**
 
-- `telek/cli/__init__.py` — register the new `bot` and `group` noun groups.
+- `telegram_agent/cli/__init__.py` — register the new `bot` and `group` noun groups.
 - `pyproject.toml` — add `[project.optional-dependencies] telegram` + bump version to `0.2.0`.
 - `CHANGELOG.md` — prepend `[0.2.0]` entry.
 - `README.md` — add Telegram usage subsection + `.env` precedence note.
-- `docs/skill-sources.md` — row noting `telegram` skill is original to telek.
+- `docs/skill-sources.md` — row noting `telegram` skill is original to telegram-agent.
 
 ---
 
@@ -47,8 +47,8 @@
 
 **Files:**
 
-- Create: `telek/telegram/__init__.py`
-- Create: `telek/telegram/_config.py`
+- Create: `telegram_agent/telegram/__init__.py`
+- Create: `telegram_agent/telegram/_config.py`
 - Create: `tests/test_config.py`
 
 - [ ] **Step 1: Write the failing tests**
@@ -56,7 +56,7 @@
 Create `tests/test_config.py`:
 
 ```python
-"""Tests for telek.telegram._config."""
+"""Tests for telegram_agent.telegram._config."""
 
 from __future__ import annotations
 
@@ -66,34 +66,34 @@ from pathlib import Path
 
 import pytest
 
-from telek.telegram._config import load_token, redact
+from telegram_agent.telegram._config import load_token, redact
 
 
 @pytest.fixture(autouse=True)
 def _isolate_env(monkeypatch):
-    monkeypatch.delenv("TELEK_BOT_TOKEN", raising=False)
+    monkeypatch.delenv("TELEGRAM_AGENT_BOT_TOKEN", raising=False)
 
 
 def test_load_token_from_environ(monkeypatch):
-    monkeypatch.setenv("TELEK_BOT_TOKEN", "env-token-123")
+    monkeypatch.setenv("TELEGRAM_AGENT_BOT_TOKEN", "env-token-123")
     assert load_token(cwd=Path("/tmp")) == "env-token-123"
 
 
 def test_load_token_from_dotenv_in_cwd(tmp_path, monkeypatch):
-    (tmp_path / ".env").write_text("TELEK_BOT_TOKEN=cwd-token\n")
-    monkeypatch.delenv("TELEK_BOT_TOKEN", raising=False)
+    (tmp_path / ".env").write_text("TELEGRAM_AGENT_BOT_TOKEN=cwd-token\n")
+    monkeypatch.delenv("TELEGRAM_AGENT_BOT_TOKEN", raising=False)
     assert load_token(cwd=tmp_path) == "cwd-token"
 
 
 def test_load_token_environ_wins_over_dotenv(tmp_path, monkeypatch):
-    (tmp_path / ".env").write_text("TELEK_BOT_TOKEN=file-token\n")
-    monkeypatch.setenv("TELEK_BOT_TOKEN", "env-token")
+    (tmp_path / ".env").write_text("TELEGRAM_AGENT_BOT_TOKEN=file-token\n")
+    monkeypatch.setenv("TELEGRAM_AGENT_BOT_TOKEN", "env-token")
     assert load_token(cwd=tmp_path) == "env-token"
 
 
 def test_load_token_walks_up_to_git_root(tmp_path, monkeypatch):
     (tmp_path / ".git").mkdir()
-    (tmp_path / ".env").write_text("TELEK_BOT_TOKEN=root-token\n")
+    (tmp_path / ".env").write_text("TELEGRAM_AGENT_BOT_TOKEN=root-token\n")
     nested = tmp_path / "a" / "b" / "c"
     nested.mkdir(parents=True)
     assert load_token(cwd=nested) == "root-token"
@@ -104,23 +104,23 @@ def test_load_token_missing_returns_none(tmp_path):
 
 
 def test_dotenv_quoted_value(tmp_path):
-    (tmp_path / ".env").write_text('TELEK_BOT_TOKEN="quoted value"\n')
+    (tmp_path / ".env").write_text('TELEGRAM_AGENT_BOT_TOKEN="quoted value"\n')
     assert load_token(cwd=tmp_path) == "quoted value"
 
 
 def test_dotenv_malformed_line_skipped(tmp_path, capsys):
-    (tmp_path / ".env").write_text("not a key value line\nTELEK_BOT_TOKEN=ok\n")
+    (tmp_path / ".env").write_text("not a key value line\nTELEGRAM_AGENT_BOT_TOKEN=ok\n")
     assert load_token(cwd=tmp_path) == "ok"
 
 
 def test_dotenv_comments_and_blanks_ignored(tmp_path):
-    (tmp_path / ".env").write_text("# comment\n\nTELEK_BOT_TOKEN=ok\n")
+    (tmp_path / ".env").write_text("# comment\n\nTELEGRAM_AGENT_BOT_TOKEN=ok\n")
     assert load_token(cwd=tmp_path) == "ok"
 
 
 def test_dotenv_world_writable_is_skipped(tmp_path, capsys):
     env_file = tmp_path / ".env"
-    env_file.write_text("TELEK_BOT_TOKEN=insecure\n")
+    env_file.write_text("TELEGRAM_AGENT_BOT_TOKEN=insecure\n")
     env_file.chmod(0o646)
     assert load_token(cwd=tmp_path) is None
     err = capsys.readouterr().err
@@ -149,9 +149,9 @@ def test_redact_masks_all_occurrences():
 - [ ] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run pytest tests/test_config.py -v`
-Expected: ImportError — `telek.telegram._config` does not exist yet.
+Expected: ImportError — `telegram_agent.telegram._config` does not exist yet.
 
-- [ ] **Step 3: Implement `telek/telegram/_config.py`**
+- [ ] **Step 3: Implement `telegram_agent/telegram/_config.py`**
 
 ```python
 """Config: token loading from env or .env, with redaction.
@@ -168,7 +168,7 @@ import stat
 import sys
 from pathlib import Path
 
-TOKEN_ENV_VAR = "TELEK_BOT_TOKEN"
+TOKEN_ENV_VAR = "TELEGRAM_AGENT_BOT_TOKEN"
 
 
 def _parse_env_file(path: Path) -> dict[str, str]:
@@ -227,7 +227,7 @@ def _find_dotenv_paths(cwd: Path) -> list[Path]:
 
 
 def load_token(cwd: Path | None = None) -> str | None:
-    """Resolve TELEK_BOT_TOKEN from env or .env. Returns None if unset."""
+    """Resolve TELEGRAM_AGENT_BOT_TOKEN from env or .env. Returns None if unset."""
     env_value = os.environ.get(TOKEN_ENV_VAR)
     if env_value:
         return env_value
@@ -255,12 +255,12 @@ def redact(text: str, token: str | None) -> str:
     return text.replace(token, "***")
 ```
 
-Create `telek/telegram/__init__.py`:
+Create `telegram_agent/telegram/__init__.py`:
 
 ```python
 """Telegram integration package — Bot API client behind a sync façade."""
 
-from telek.telegram._config import TOKEN_ENV_VAR, load_token, redact
+from telegram_agent.telegram._config import TOKEN_ENV_VAR, load_token, redact
 
 __all__ = ["TOKEN_ENV_VAR", "load_token", "redact"]
 ```
@@ -273,11 +273,11 @@ Expected: All 12 tests pass.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add telek/telegram/__init__.py telek/telegram/_config.py tests/test_config.py
+git add telegram_agent/telegram/__init__.py telegram_agent/telegram/_config.py tests/test_config.py
 git commit -m "$(cat <<'EOF'
 feat(telegram): token loader + .env discovery + redaction
 
-Adds telek.telegram._config with TELEK_BOT_TOKEN resolution from
+Adds telegram_agent.telegram._config with TELEGRAM_AGENT_BOT_TOKEN resolution from
 process env or .env (cwd then nearest git root). Process env wins.
 World/group-writable .env files are skipped with a warning.
 redact() masks token occurrences before any output crosses the wire.
@@ -293,7 +293,7 @@ EOF
 
 **Files:**
 
-- Create: `telek/telegram/_errors.py`
+- Create: `telegram_agent/telegram/_errors.py`
 - Create: `tests/test_errors.py`
 
 - [ ] **Step 1: Write the failing tests**
@@ -301,14 +301,14 @@ EOF
 Create `tests/test_errors.py`:
 
 ```python
-"""Tests for telek.telegram._errors.wrap()."""
+"""Tests for telegram_agent.telegram._errors.wrap()."""
 
 from __future__ import annotations
 
 import pytest
 
-from telek.cli._errors import EXIT_ENV_ERROR, EXIT_USER_ERROR
-from telek.telegram._errors import wrap
+from telegram_agent.cli._errors import EXIT_ENV_ERROR, EXIT_USER_ERROR
+from telegram_agent.telegram._errors import wrap
 
 telegram = pytest.importorskip("telegram")
 from telegram.error import (  # noqa: E402
@@ -396,31 +396,31 @@ def test_wrap_passes_unknown_exception_through():
 - [ ] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run pytest tests/test_errors.py -v`
-Expected: ImportError on `telek.telegram._errors`. (If `python-telegram-bot` is not installed, the `pytest.importorskip` will skip — install via `uv sync --extra telegram` after Task 7 lands. For now run `uv pip install 'python-telegram-bot>=21,<22'` in the dev env to exercise these tests.)
+Expected: ImportError on `telegram_agent.telegram._errors`. (If `python-telegram-bot` is not installed, the `pytest.importorskip` will skip — install via `uv sync --extra telegram` after Task 7 lands. For now run `uv pip install 'python-telegram-bot>=21,<22'` in the dev env to exercise these tests.)
 
 - [ ] **Step 3: Install python-telegram-bot for development**
 
 Run: `uv pip install 'python-telegram-bot>=21,<22'`
 Expected: Library installs into the project venv. (Task 7 makes this permanent via `pyproject.toml`; this step is bootstrap-only so tests can run.)
 
-- [ ] **Step 4: Implement `telek/telegram/_errors.py`**
+- [ ] **Step 4: Implement `telegram_agent/telegram/_errors.py`**
 
 ```python
-"""Map python-telegram-bot exceptions to TelekError.
+"""Map python-telegram-bot exceptions to TelegramAgentError.
 
 This module is the only place telegram.error exceptions cross into the rest
-of telek. Every wrapped message is run through telek.telegram._config.redact
+of telegram-agent. Every wrapped message is run through telegram_agent.telegram._config.redact
 so a token accidentally embedded in an upstream string never escapes.
 """
 
 from __future__ import annotations
 
-from telek.cli._errors import EXIT_ENV_ERROR, EXIT_USER_ERROR, TelekError
-from telek.telegram._config import redact
+from telegram_agent.cli._errors import EXIT_ENV_ERROR, EXIT_USER_ERROR, TelegramAgentError
+from telegram_agent.telegram._config import redact
 
 
-def wrap(exc: BaseException, *, token: str | None) -> TelekError:
-    """Convert a python-telegram-bot exception into a TelekError."""
+def wrap(exc: BaseException, *, token: str | None) -> TelegramAgentError:
+    """Convert a python-telegram-bot exception into a TelegramAgentError."""
     from telegram.error import (
         BadRequest,
         Forbidden,
@@ -435,22 +435,22 @@ def wrap(exc: BaseException, *, token: str | None) -> TelekError:
     msg = redact(raw_msg, token)
 
     if isinstance(exc, InvalidToken):
-        return TelekError(
+        return TelegramAgentError(
             code=EXIT_ENV_ERROR,
             message="telegram rejected bot token",
-            remediation="check TELEK_BOT_TOKEN with @BotFather",
+            remediation="check TELEGRAM_AGENT_BOT_TOKEN with @BotFather",
         )
 
     if isinstance(exc, RetryAfter):
         seconds = getattr(exc, "retry_after", "?")
-        return TelekError(
+        return TelegramAgentError(
             code=EXIT_ENV_ERROR,
             message=f"rate limited; retry after {seconds}s",
             remediation="wait and retry; v0.2 does not auto-retry",
         )
 
     if isinstance(exc, (NetworkError, TimedOut)):
-        return TelekError(
+        return TelegramAgentError(
             code=EXIT_ENV_ERROR,
             message=f"network error talking to telegram: {msg}",
             remediation="check connectivity and retry",
@@ -459,12 +459,12 @@ def wrap(exc: BaseException, *, token: str | None) -> TelekError:
     if isinstance(exc, Forbidden):
         lowered = msg.lower()
         if "kicked" in lowered or "not a member" in lowered or "blocked" in lowered:
-            return TelekError(
+            return TelegramAgentError(
                 code=EXIT_USER_ERROR,
                 message="bot is not in this chat",
                 remediation="add the bot to the chat first",
             )
-        return TelekError(
+        return TelegramAgentError(
             code=EXIT_USER_ERROR,
             message=f"forbidden: {msg}",
             remediation="check the bot has access to this chat",
@@ -473,31 +473,31 @@ def wrap(exc: BaseException, *, token: str | None) -> TelekError:
     if isinstance(exc, BadRequest):
         lowered = msg.lower()
         if "chat not found" in lowered:
-            return TelekError(
+            return TelegramAgentError(
                 code=EXIT_USER_ERROR,
                 message=f"chat not found: {msg}",
                 remediation="verify id/username; ensure the bot is a member",
             )
         if "not enough rights" in lowered or "have no rights" in lowered:
-            return TelekError(
+            return TelegramAgentError(
                 code=EXIT_USER_ERROR,
                 message=f"bot lacks required permission: {msg}",
                 remediation="promote the bot and grant the needed permission",
             )
-        return TelekError(
+        return TelegramAgentError(
             code=EXIT_USER_ERROR,
             message=msg,
             remediation="",
         )
 
     if isinstance(exc, TelegramError):
-        return TelekError(
+        return TelegramAgentError(
             code=EXIT_ENV_ERROR,
             message=msg,
             remediation="",
         )
 
-    return TelekError(
+    return TelegramAgentError(
         code=EXIT_ENV_ERROR,
         message=msg or exc.__class__.__name__,
         remediation="",
@@ -512,12 +512,12 @@ Expected: All 11 tests pass.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add telek/telegram/_errors.py tests/test_errors.py
+git add telegram_agent/telegram/_errors.py tests/test_errors.py
 git commit -m "$(cat <<'EOF'
-feat(telegram): map python-telegram-bot exceptions to TelekError
+feat(telegram): map python-telegram-bot exceptions to TelegramAgentError
 
 Adds wrap(exc, token=...) as the only crossing point between telegram.error
-and the rest of telek. Maps InvalidToken/RetryAfter/Network/Forbidden/
+and the rest of telegram-agent. Maps InvalidToken/RetryAfter/Network/Forbidden/
 BadRequest with explicit remediation strings and the project's exit code
 policy (user=1, env=2). Every message is redacted before it crosses.
 
@@ -532,20 +532,20 @@ EOF
 
 **Files:**
 
-- Create: `telek/telegram/_plan.py`
+- Create: `telegram_agent/telegram/_plan.py`
 - Create: `tests/test_plan.py`
-- Modify: `telek/telegram/__init__.py`
+- Modify: `telegram_agent/telegram/__init__.py`
 
 - [ ] **Step 1: Write the failing tests**
 
 Create `tests/test_plan.py`:
 
 ```python
-"""Tests for telek.telegram._plan.ValidatedPlan.to_dict()."""
+"""Tests for telegram_agent.telegram._plan.ValidatedPlan.to_dict()."""
 
 from __future__ import annotations
 
-from telek.telegram._plan import (
+from telegram_agent.telegram._plan import (
     PinIntent,
     RosterIntent,
     SendIntent,
@@ -664,9 +664,9 @@ def test_plan_warnings_default_empty_list():
 - [ ] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run pytest tests/test_plan.py -v`
-Expected: ImportError on `telek.telegram._plan`.
+Expected: ImportError on `telegram_agent.telegram._plan`.
 
-- [ ] **Step 3: Implement `telek/telegram/_plan.py`**
+- [ ] **Step 3: Implement `telegram_agent/telegram/_plan.py`**
 
 ```python
 """ValidatedPlan + verb-specific Intent dataclasses.
@@ -757,13 +757,13 @@ class ValidatedPlan:
         }
 ```
 
-Update `telek/telegram/__init__.py`:
+Update `telegram_agent/telegram/__init__.py`:
 
 ```python
 """Telegram integration package — Bot API client behind a sync façade."""
 
-from telek.telegram._config import TOKEN_ENV_VAR, load_token, redact
-from telek.telegram._plan import (
+from telegram_agent.telegram._config import TOKEN_ENV_VAR, load_token, redact
+from telegram_agent.telegram._plan import (
     PinIntent,
     RosterIntent,
     SendIntent,
@@ -789,7 +789,7 @@ Expected: All 6 tests pass.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add telek/telegram/_plan.py telek/telegram/__init__.py tests/test_plan.py
+git add telegram_agent/telegram/_plan.py telegram_agent/telegram/__init__.py tests/test_plan.py
 git commit -m "$(cat <<'EOF'
 feat(telegram): ValidatedPlan + per-verb Intent dataclasses
 
@@ -808,9 +808,9 @@ EOF
 
 **Files:**
 
-- Create: `telek/telegram/_client.py`
+- Create: `telegram_agent/telegram/_client.py`
 - Create: `tests/fakes.py`
-- Modify: `telek/telegram/__init__.py`
+- Modify: `telegram_agent/telegram/__init__.py`
 
 - [ ] **Step 1: Write the FakeTelegramClient first** (no test yet; this is shared infrastructure used by Task 5+6 CLI tests)
 
@@ -833,7 +833,7 @@ class _Call:
 
 @dataclass
 class FakeTelegramClient:
-    """In-memory stand-in for telek.telegram.TelegramClient."""
+    """In-memory stand-in for telegram_agent.telegram.TelegramClient."""
 
     token: str | None = "fake-token"
     me: dict[str, Any] = field(
@@ -940,54 +940,54 @@ class FakeTelegramClient:
 Create `tests/test_client.py`:
 
 ```python
-"""Tests for telek.telegram._client.TelegramClient (lazy import + façade)."""
+"""Tests for telegram_agent.telegram._client.TelegramClient (lazy import + façade)."""
 
 from __future__ import annotations
 
 import pytest
 
-from telek.cli._errors import EXIT_ENV_ERROR, TelekError
+from telegram_agent.cli._errors import EXIT_ENV_ERROR, TelegramAgentError
 
 
 def test_client_requires_token():
-    from telek.telegram._client import TelegramClient
+    from telegram_agent.telegram._client import TelegramClient
 
-    with pytest.raises(TelekError) as exc:
+    with pytest.raises(TelegramAgentError) as exc:
         TelegramClient(token=None)
     assert exc.value.code == EXIT_ENV_ERROR
-    assert "TELEK_BOT_TOKEN" in exc.value.message
+    assert "TELEGRAM_AGENT_BOT_TOKEN" in exc.value.message
 
 
 def test_client_missing_library_raises_clean(monkeypatch):
-    """If python-telegram-bot can't import, TelegramClient raises TelekError."""
+    """If python-telegram-bot can't import, TelegramClient raises TelegramAgentError."""
     import importlib
     import sys
 
-    from telek.telegram import _client as client_mod
+    from telegram_agent.telegram import _client as client_mod
 
     monkeypatch.setitem(sys.modules, "telegram", None)
     importlib.reload(client_mod)
 
-    with pytest.raises(TelekError) as exc:
+    with pytest.raises(TelegramAgentError) as exc:
         client_mod.TelegramClient(token="fake")
     assert exc.value.code == EXIT_ENV_ERROR
     assert "python-telegram-bot" in exc.value.message
-    assert "telek[telegram]" in exc.value.remediation
+    assert "telegram-agent[telegram]" in exc.value.remediation
 ```
 
 - [ ] **Step 3: Run the tests to verify they fail**
 
 Run: `uv run pytest tests/test_client.py -v`
-Expected: ImportError on `telek.telegram._client`.
+Expected: ImportError on `telegram_agent.telegram._client`.
 
-- [ ] **Step 4: Implement `telek/telegram/_client.py`**
+- [ ] **Step 4: Implement `telegram_agent/telegram/_client.py`**
 
 ```python
 """Sync façade over python-telegram-bot.
 
 CLI verbs stay synchronous (matching the existing learn/explain/whoami
 pattern) by wrapping each async Bot method with asyncio.run. The lib is
-imported lazily inside __init__ so `telek --help` and the non-Telegram
+imported lazily inside __init__ so `telegram-agent --help` and the non-Telegram
 verbs work without the optional dep installed.
 """
 
@@ -996,7 +996,7 @@ from __future__ import annotations
 import asyncio
 from typing import Any
 
-from telek.cli._errors import EXIT_ENV_ERROR, TelekError
+from telegram_agent.cli._errors import EXIT_ENV_ERROR, TelegramAgentError
 
 
 class TelegramClient:
@@ -1004,21 +1004,21 @@ class TelegramClient:
 
     def __init__(self, token: str | None) -> None:
         if not token:
-            raise TelekError(
+            raise TelegramAgentError(
                 code=EXIT_ENV_ERROR,
-                message="TELEK_BOT_TOKEN not set",
+                message="TELEGRAM_AGENT_BOT_TOKEN not set",
                 remediation=(
-                    "set TELEK_BOT_TOKEN in your environment or a local .env file "
+                    "set TELEGRAM_AGENT_BOT_TOKEN in your environment or a local .env file "
                     "(get the token from @BotFather)"
                 ),
             )
         try:
             from telegram import Bot
         except ImportError as exc:
-            raise TelekError(
+            raise TelegramAgentError(
                 code=EXIT_ENV_ERROR,
                 message="python-telegram-bot not installed",
-                remediation="pip install 'telek[telegram]'",
+                remediation="pip install 'telegram-agent[telegram]'",
             ) from exc
 
         self._token = token
@@ -1121,14 +1121,14 @@ def _member_permissions(m: Any) -> dict[str, Any]:
     }
 ```
 
-Update `telek/telegram/__init__.py`:
+Update `telegram_agent/telegram/__init__.py`:
 
 ```python
 """Telegram integration package — Bot API client behind a sync façade."""
 
-from telek.telegram._client import TelegramClient
-from telek.telegram._config import TOKEN_ENV_VAR, load_token, redact
-from telek.telegram._plan import (
+from telegram_agent.telegram._client import TelegramClient
+from telegram_agent.telegram._config import TOKEN_ENV_VAR, load_token, redact
+from telegram_agent.telegram._plan import (
     PinIntent,
     RosterIntent,
     SendIntent,
@@ -1155,13 +1155,13 @@ Expected: Both tests pass. The "missing library" test reloads the module after b
 - [ ] **Step 6: Commit**
 
 ```bash
-git add telek/telegram/_client.py telek/telegram/__init__.py tests/fakes.py tests/test_client.py
+git add telegram_agent/telegram/_client.py telegram_agent/telegram/__init__.py tests/fakes.py tests/test_client.py
 git commit -m "$(cat <<'EOF'
 feat(telegram): TelegramClient sync façade + FakeTelegramClient
 
 TelegramClient wraps python-telegram-bot v21 with asyncio.run, lazy-imports
-telegram so `telek --help` works without the extra installed, and raises
-TelekError cleanly when the lib or token is missing. FakeTelegramClient
+telegram so `telegram-agent --help` works without the extra installed, and raises
+TelegramAgentError cleanly when the lib or token is missing. FakeTelegramClient
 satisfies the same protocol for tests — records calls, returns canned data,
 supports raise_on={method: exception} for error-path coverage.
 
@@ -1172,12 +1172,12 @@ EOF
 
 ---
 
-## Task 5: `telek bot send` CLI verb
+## Task 5: `telegram-agent bot send` CLI verb
 
 **Files:**
 
-- Create: `telek/cli/_commands/bot.py`
-- Modify: `telek/cli/__init__.py:51-66`
+- Create: `telegram_agent/cli/_commands/bot.py`
+- Modify: `telegram_agent/cli/__init__.py:51-66`
 - Create: `tests/test_telegram_cli.py`
 
 - [ ] **Step 1: Write the failing tests for `bot send`**
@@ -1185,7 +1185,7 @@ EOF
 Create `tests/test_telegram_cli.py`:
 
 ```python
-"""CLI smoke tests for telek bot/group verbs."""
+"""CLI smoke tests for telegram-agent bot/group verbs."""
 
 from __future__ import annotations
 
@@ -1194,8 +1194,8 @@ from typing import Any
 
 import pytest
 
-from telek.cli import main
-from telek.cli._errors import EXIT_ENV_ERROR, EXIT_USER_ERROR
+from telegram_agent.cli import main
+from telegram_agent.cli._errors import EXIT_ENV_ERROR, EXIT_USER_ERROR
 from tests.fakes import FakeTelegramClient
 
 pytest.importorskip("telegram")
@@ -1205,13 +1205,13 @@ from telegram.error import BadRequest  # noqa: E402
 @pytest.fixture
 def fake(monkeypatch) -> FakeTelegramClient:
     client = FakeTelegramClient()
-    monkeypatch.setenv("TELEK_BOT_TOKEN", "fake-token")
+    monkeypatch.setenv("TELEGRAM_AGENT_BOT_TOKEN", "fake-token")
     monkeypatch.setattr(
-        "telek.cli._commands.bot._build_client",
+        "telegram_agent.cli._commands.bot._build_client",
         lambda token: client,
     )
     monkeypatch.setattr(
-        "telek.cli._commands.group._build_client",
+        "telegram_agent.cli._commands.group._build_client",
         lambda token: client,
     )
     return client
@@ -1269,7 +1269,7 @@ def test_bot_send_parse_mode_defaults_to_none(fake, capsys):
 
 
 def test_bot_send_missing_token_exits_env_error(monkeypatch, capsys):
-    monkeypatch.delenv("TELEK_BOT_TOKEN", raising=False)
+    monkeypatch.delenv("TELEGRAM_AGENT_BOT_TOKEN", raising=False)
     rc = main(["bot", "send", "--chat", "@x", "--text", "hi"])
     assert rc == EXIT_ENV_ERROR
 
@@ -1304,10 +1304,10 @@ def test_bot_send_reply_to_threaded_through(fake, capsys):
 Run: `uv run pytest tests/test_telegram_cli.py -v`
 Expected: All fail with `argparse: invalid choice: 'bot'`.
 
-- [ ] **Step 3: Implement `telek/cli/_commands/bot.py`**
+- [ ] **Step 3: Implement `telegram_agent/cli/_commands/bot.py`**
 
 ```python
-"""`telek bot ...` — bot-scoped Telegram verbs."""
+"""`telegram-agent bot ...` — bot-scoped Telegram verbs."""
 
 from __future__ import annotations
 
@@ -1316,15 +1316,15 @@ import json
 import sys
 from typing import Any
 
-from telek.cli._errors import EXIT_USER_ERROR, TelekError
-from telek.cli._output import emit_result
-from telek.telegram import (
+from telegram_agent.cli._errors import EXIT_USER_ERROR, TelegramAgentError
+from telegram_agent.cli._output import emit_result
+from telegram_agent.telegram import (
     SendIntent,
     TelegramClient,
     ValidatedPlan,
     load_token,
 )
-from telek.telegram._errors import wrap as wrap_telegram_error
+from telegram_agent.telegram._errors import wrap as wrap_telegram_error
 
 
 def _build_client(token: str | None) -> TelegramClient:
@@ -1344,7 +1344,7 @@ def _resolve_text(args: argparse.Namespace) -> str:
         return args.text
     if args.text_stdin:
         return sys.stdin.read()
-    raise TelekError(
+    raise TelegramAgentError(
         code=EXIT_USER_ERROR,
         message="missing message body",
         remediation="pass --text '...' or --text-stdin",
@@ -1363,7 +1363,7 @@ def _validate_send(
 
     status = member["status"]
     if status not in ("member", "administrator", "creator"):
-        raise TelekError(
+        raise TelegramAgentError(
             code=EXIT_USER_ERROR,
             message=f"bot is not in chat (status={status})",
             remediation="add the bot to the chat first",
@@ -1371,13 +1371,13 @@ def _validate_send(
 
     perms = member.get("permissions") or {}
     if chat["type"] == "channel" and not perms.get("can_post"):
-        raise TelekError(
+        raise TelegramAgentError(
             code=EXIT_USER_ERROR,
             message="bot lacks can_post_messages on this channel",
             remediation="promote the bot and grant post permission",
         )
     if perms.get("can_send_messages") is False:
-        raise TelekError(
+        raise TelegramAgentError(
             code=EXIT_USER_ERROR,
             message="group has messages disabled for non-admins",
             remediation="promote the bot or unlock the group",
@@ -1451,27 +1451,27 @@ def register(sub: argparse._SubParsersAction) -> None:
     send.set_defaults(func=_run_send)
 ```
 
-- [ ] **Step 4: Register `bot` group in `telek/cli/__init__.py`**
+- [ ] **Step 4: Register `bot` group in `telegram_agent/cli/__init__.py`**
 
-Open `telek/cli/__init__.py` and modify the `_build_parser` function. After the existing `_whoami_cmd.register(sub)` line, add the bot group:
+Open `telegram_agent/cli/__init__.py` and modify the `_build_parser` function. After the existing `_whoami_cmd.register(sub)` line, add the bot group:
 
 ```python
 def _build_parser() -> argparse.ArgumentParser:
-    from telek.cli._commands import bot as _bot_cmd
-    from telek.cli._commands import explain as _explain_cmd
-    from telek.cli._commands import learn as _learn_cmd
-    from telek.cli._commands import whoami as _whoami_cmd
+    from telegram_agent.cli._commands import bot as _bot_cmd
+    from telegram_agent.cli._commands import explain as _explain_cmd
+    from telegram_agent.cli._commands import learn as _learn_cmd
+    from telegram_agent.cli._commands import whoami as _whoami_cmd
 
-    parser = _TelekArgumentParser(
-        prog="telek",
-        description="telek — agent-first Telegram community management tools",
+    parser = _TelegramAgentArgumentParser(
+        prog="telegram-agent",
+        description="telegram-agent — agent-first Telegram community management tools",
     )
     parser.add_argument(
         "--version",
         action="version",
         version=f"%(prog)s {__version__}",
     )
-    sub = parser.add_subparsers(dest="command", parser_class=_TelekArgumentParser)
+    sub = parser.add_subparsers(dest="command", parser_class=_TelegramAgentArgumentParser)
 
     _learn_cmd.register(sub)
     _explain_cmd.register(sub)
@@ -1489,11 +1489,11 @@ Expected: All 9 `bot_send` tests pass.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add telek/cli/_commands/bot.py telek/cli/__init__.py tests/test_telegram_cli.py
+git add telegram_agent/cli/_commands/bot.py telegram_agent/cli/__init__.py tests/test_telegram_cli.py
 git commit -m "$(cat <<'EOF'
-feat(cli): telek bot send (dry-run + --apply)
+feat(cli): telegram-agent bot send (dry-run + --apply)
 
-Adds `telek bot send` with --text / --text-stdin, --parse-mode (default
+Adds `telegram-agent bot send` with --text / --text-stdin, --parse-mode (default
 none), --silent, --reply-to, --apply, --json. Dry-run runs validated-
 preview probes (getMe/getChat/getChatMember + permission asserts) and
 prints the ValidatedPlan without sending. --apply flips dry_run=False
@@ -1506,12 +1506,12 @@ EOF
 
 ---
 
-## Task 6: `telek group roster` + `telek group pin` CLI verbs
+## Task 6: `telegram-agent group roster` + `telegram-agent group pin` CLI verbs
 
 **Files:**
 
-- Create: `telek/cli/_commands/group.py`
-- Modify: `telek/cli/__init__.py` — register `group` group
+- Create: `telegram_agent/cli/_commands/group.py`
+- Modify: `telegram_agent/cli/__init__.py` — register `group` group
 - Modify: `tests/test_telegram_cli.py` — append roster + pin tests
 
 - [ ] **Step 1: Append failing tests for roster and pin to `tests/test_telegram_cli.py`**
@@ -1613,26 +1613,26 @@ def test_group_pin_blocks_apply_when_bot_lacks_can_pin(fake, capsys):
 Run: `uv run pytest tests/test_telegram_cli.py -v -k "group_"`
 Expected: All fail with `argparse: invalid choice: 'group'`.
 
-- [ ] **Step 3: Implement `telek/cli/_commands/group.py`**
+- [ ] **Step 3: Implement `telegram_agent/cli/_commands/group.py`**
 
 ```python
-"""`telek group ...` — group-scoped Telegram verbs."""
+"""`telegram-agent group ...` — group-scoped Telegram verbs."""
 
 from __future__ import annotations
 
 import argparse
 from typing import Any
 
-from telek.cli._errors import EXIT_USER_ERROR, TelekError
-from telek.cli._output import emit_result
-from telek.telegram import (
+from telegram_agent.cli._errors import EXIT_USER_ERROR, TelegramAgentError
+from telegram_agent.cli._output import emit_result
+from telegram_agent.telegram import (
     PinIntent,
     RosterIntent,
     TelegramClient,
     ValidatedPlan,
     load_token,
 )
-from telek.telegram._errors import wrap as wrap_telegram_error
+from telegram_agent.telegram._errors import wrap as wrap_telegram_error
 
 
 def _build_client(token: str | None) -> TelegramClient:
@@ -1695,7 +1695,7 @@ def _validate_pin(
     message_id = args.message
 
     if action == "pin" and message_id is None:
-        raise TelekError(
+        raise TelegramAgentError(
             code=EXIT_USER_ERROR,
             message="--message is required when pinning",
             remediation="pass --message <id> of the message to pin",
@@ -1703,7 +1703,7 @@ def _validate_pin(
 
     perms = member.get("permissions") or {}
     if member["status"] != "administrator" or not perms.get("can_pin"):
-        raise TelekError(
+        raise TelegramAgentError(
             code=EXIT_USER_ERROR,
             message="bot lacks can_pin_messages",
             remediation="promote the bot to admin with the pin permission",
@@ -1765,28 +1765,28 @@ def register(sub: argparse._SubParsersAction) -> None:
     pin.set_defaults(func=_run_pin)
 ```
 
-- [ ] **Step 4: Register `group` in `telek/cli/__init__.py`**
+- [ ] **Step 4: Register `group` in `telegram_agent/cli/__init__.py`**
 
 In `_build_parser`, add the `group` import and registration:
 
 ```python
 def _build_parser() -> argparse.ArgumentParser:
-    from telek.cli._commands import bot as _bot_cmd
-    from telek.cli._commands import explain as _explain_cmd
-    from telek.cli._commands import group as _group_cmd
-    from telek.cli._commands import learn as _learn_cmd
-    from telek.cli._commands import whoami as _whoami_cmd
+    from telegram_agent.cli._commands import bot as _bot_cmd
+    from telegram_agent.cli._commands import explain as _explain_cmd
+    from telegram_agent.cli._commands import group as _group_cmd
+    from telegram_agent.cli._commands import learn as _learn_cmd
+    from telegram_agent.cli._commands import whoami as _whoami_cmd
 
-    parser = _TelekArgumentParser(
-        prog="telek",
-        description="telek — agent-first Telegram community management tools",
+    parser = _TelegramAgentArgumentParser(
+        prog="telegram-agent",
+        description="telegram-agent — agent-first Telegram community management tools",
     )
     parser.add_argument(
         "--version",
         action="version",
         version=f"%(prog)s {__version__}",
     )
-    sub = parser.add_subparsers(dest="command", parser_class=_TelekArgumentParser)
+    sub = parser.add_subparsers(dest="command", parser_class=_TelegramAgentArgumentParser)
 
     _learn_cmd.register(sub)
     _explain_cmd.register(sub)
@@ -1805,9 +1805,9 @@ Expected: All tests pass — full bot_send + group_roster + group_pin coverage.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add telek/cli/_commands/group.py telek/cli/__init__.py tests/test_telegram_cli.py
+git add telegram_agent/cli/_commands/group.py telegram_agent/cli/__init__.py tests/test_telegram_cli.py
 git commit -m "$(cat <<'EOF'
-feat(cli): telek group roster + telek group pin
+feat(cli): telegram-agent group roster + telegram-agent group pin
 
 Roster: returns member_count, getChatAdministrators, bot self status +
 permissions; explicit "Bot API does not expose full member list" note
@@ -1840,7 +1840,7 @@ The full top of `pyproject.toml` should now look like:
 
 ```toml
 [project]
-name = "telek"
+name = "telegram-agent"
 version = "0.1.0"
 description = "Agent-first Telegram community management tools."
 readme = "README.md"
@@ -1867,10 +1867,10 @@ Expected: Resolves and installs `python-telegram-bot` and its deps into `.venv`.
 
 - [ ] **Step 3: Verify the core install still works without the extra**
 
-Run: `uv run python -c "import telek; print(telek.__version__)"`
+Run: `uv run python -c "import telegram_agent; print(telegram_agent.__version__)"`
 Expected: prints `0.1.0`. (Version bump comes in Task 9.)
 
-Run: `uv run python -c "from telek.telegram import TelegramClient; print('importable')"`
+Run: `uv run python -c "from telegram_agent.telegram import TelegramClient; print('importable')"`
 Expected: prints `importable` — the module imports fine even without instantiation.
 
 - [ ] **Step 4: Commit**
@@ -1881,8 +1881,8 @@ git commit -m "$(cat <<'EOF'
 build: declare telegram optional extra
 
 Adds python-telegram-bot>=21,<22 under [project.optional-dependencies]
-telegram. Core install (pip install telek) stays zero-dep; users who
-want the Telegram surface run pip install 'telek[telegram]'.
+telegram. Core install (pip install telegram-agent) stays zero-dep; users who
+want the Telegram surface run pip install 'telegram-agent[telegram]'.
 
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 EOF
@@ -1908,12 +1908,12 @@ Create `.claude/skills/telegram/SKILL.md`:
 ````markdown
 ---
 name: telegram
-description: Send messages, inspect group rosters, and pin messages via the Telegram Bot API through `telek`. Writes are dry-run by default; --apply is required to commit.
+description: Send messages, inspect group rosters, and pin messages via the Telegram Bot API through `telegram-agent`. Writes are dry-run by default; --apply is required to commit.
 ---
 
 # telegram skill
 
-Thin wrapper around `telek bot send` / `telek group roster` / `telek group pin`.
+Thin wrapper around `telegram-agent bot send` / `telegram-agent group roster` / `telegram-agent group pin`.
 Scripts default to `--json` so agents get structured output without
 remembering the flag.
 
@@ -1927,8 +1927,8 @@ remembering the flag.
 
 ## Prerequisites
 
-1. `pip install 'telek[telegram]'` — installs `python-telegram-bot`.
-2. `TELEK_BOT_TOKEN` in environment or a local `.env` (cwd or repo root).
+1. `pip install 'telegram-agent[telegram]'` — installs `python-telegram-bot`.
+2. `TELEGRAM_AGENT_BOT_TOKEN` in environment or a local `.env` (cwd or repo root).
    Get a token by creating a bot with `@BotFather` on Telegram.
 3. The bot must be a member of the target chat. For pin and most channel
    send cases, the bot must be promoted to admin with the relevant
@@ -1938,9 +1938,9 @@ remembering the flag.
 
 | Script | Wraps | Side effect | Default |
 |---|---|---|---|
-| `send.sh` | `telek bot send` | sends a message | **dry-run** — pass `--apply` to actually send |
-| `roster.sh` | `telek group roster` | read-only | runs |
-| `pin.sh` | `telek group pin` | pins / unpins | **dry-run** — pass `--apply` to actually pin |
+| `send.sh` | `telegram-agent bot send` | sends a message | **dry-run** — pass `--apply` to actually send |
+| `roster.sh` | `telegram-agent group roster` | read-only | runs |
+| `pin.sh` | `telegram-agent group pin` | pins / unpins | **dry-run** — pass `--apply` to actually pin |
 
 ## Recipes
 
@@ -1960,14 +1960,14 @@ MSG_ID=$(./scripts/send.sh --chat @announcements --text "Release v0.2 is out" \
 
 ## Anti-patterns
 
-- **Never** commit `TELEK_BOT_TOKEN` or `.env`. The `.gitignore` covers
+- **Never** commit `TELEGRAM_AGENT_BOT_TOKEN` or `.env`. The `.gitignore` covers
   `.env`; keep it that way.
 - **Always** read the dry-run JSON before passing `--apply`. The validated
   plan tells you if the bot has the right permissions; `--apply` skipping
   that check defeats the purpose.
 - **Do not poll** roster to track membership — the Bot API doesn't expose
   full member lists; you'll only re-read the count.
-- **No GitHub-style signature** in Telegram messages. The `- telek (Claude)`
+- **No GitHub-style signature** in Telegram messages. The `- telegram-agent (Claude)`
   trailer applies to GitHub posts, not Telegram chat messages.
 ````
 
@@ -1977,7 +1977,7 @@ Create `.claude/skills/telegram/scripts/send.sh`:
 
 ```bash
 #!/usr/bin/env bash
-# Send a Telegram message via `telek bot send`. Defaults to --json.
+# Send a Telegram message via `telegram-agent bot send`. Defaults to --json.
 # Pass --apply to actually send (dry-run otherwise).
 set -euo pipefail
 
@@ -1989,7 +1989,7 @@ for arg in "$@"; do
   fi
 done
 
-exec telek bot send --json "$@"
+exec telegram-agent bot send --json "$@"
 ```
 
 - [ ] **Step 3: Write `scripts/roster.sh`**
@@ -1998,9 +1998,9 @@ Create `.claude/skills/telegram/scripts/roster.sh`:
 
 ```bash
 #!/usr/bin/env bash
-# List count + admins + bot self via `telek group roster`. Defaults to --json.
+# List count + admins + bot self via `telegram-agent group roster`. Defaults to --json.
 set -euo pipefail
-exec telek group roster --json "$@"
+exec telegram-agent group roster --json "$@"
 ```
 
 - [ ] **Step 4: Write `scripts/pin.sh`**
@@ -2009,7 +2009,7 @@ Create `.claude/skills/telegram/scripts/pin.sh`:
 
 ```bash
 #!/usr/bin/env bash
-# Pin or unpin via `telek group pin`. Defaults to --json.
+# Pin or unpin via `telegram-agent group pin`. Defaults to --json.
 # Pass --apply to actually (un)pin (dry-run otherwise).
 set -euo pipefail
 
@@ -2021,7 +2021,7 @@ for arg in "$@"; do
   fi
 done
 
-exec telek group pin --json "$@"
+exec telegram-agent group pin --json "$@"
 ```
 
 - [ ] **Step 5: Make scripts executable**
@@ -2032,23 +2032,23 @@ Expected: No output, three scripts now have `-rwxr-xr-x` permissions.
 - [ ] **Step 6: Verify scripts shell out without errors (no token needed; --help short-circuits)**
 
 Run: `.claude/skills/telegram/scripts/send.sh --help`
-Expected: prints `usage: telek bot send ...`
+Expected: prints `usage: telegram-agent bot send ...`
 
 Run: `.claude/skills/telegram/scripts/roster.sh --help`
-Expected: prints `usage: telek group roster ...`
+Expected: prints `usage: telegram-agent group roster ...`
 
 Run: `.claude/skills/telegram/scripts/pin.sh --help`
-Expected: prints `usage: telek group pin ...`
+Expected: prints `usage: telegram-agent group pin ...`
 
 - [ ] **Step 7: Add provenance row to `docs/skill-sources.md`**
 
 Open `docs/skill-sources.md`. Append (preserving the existing table shape):
 
 ```markdown
-| `telegram` | original to telek (no upstream) | — | v0.2 |
+| `telegram` | original to telegram-agent (no upstream) | — | v0.2 |
 ```
 
-If the table headers differ in this file, follow the existing column layout — the salient fact is: skill name = `telegram`, source = "original to telek", version = `v0.2`.
+If the table headers differ in this file, follow the existing column layout — the salient fact is: skill name = `telegram`, source = "original to telegram-agent", version = `v0.2`.
 
 - [ ] **Step 8: Commit**
 
@@ -2059,8 +2059,8 @@ skill(telegram): vendored agent wrapper for the v0.2 verbs
 
 SKILL.md documents when to use, prerequisites, the three verbs, recipes
 (announce-then-pin, print admin list), and anti-patterns. Scripts thinly
-wrap `telek bot/group` with --json by default and a one-second stderr
-warning before --apply on write verbs. No new tooling (bash, jq, telek).
+wrap `telegram-agent bot/group` with --json by default and a one-second stderr
+warning before --apply on write verbs. No new tooling (bash, jq, telegram-agent).
 
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 EOF
@@ -2076,7 +2076,7 @@ EOF
 - Modify: `README.md`
 - Modify: `CHANGELOG.md`
 - Modify: `pyproject.toml` (version: `0.1.0` → `0.2.0`)
-- Modify: `telek/__init__.py` (`__version__` is derived from package metadata — verify no hardcoded version)
+- Modify: `telegram_agent/__init__.py` (`__version__` is derived from package metadata — verify no hardcoded version)
 
 - [ ] **Step 1: Update `README.md` — Status section**
 
@@ -2085,8 +2085,8 @@ Find the `## Status` section in `README.md`. Replace the existing paragraph with
 ```markdown
 ## Status
 
-**Alpha.** v0.2 lands the Telegram surface: `telek bot send`,
-`telek group roster`, `telek group pin`. Every write verb is dry-run by
+**Alpha.** v0.2 lands the Telegram surface: `telegram-agent bot send`,
+`telegram-agent group roster`, `telegram-agent group pin`. Every write verb is dry-run by
 default; pass `--apply` to commit.
 ```
 
@@ -2095,19 +2095,19 @@ default; pass `--apply` to commit.
 Find the `## Usage` section. After the existing usage block, append a new subsection:
 
 ````markdown
-### Telegram verbs (requires `pip install 'telek[telegram]'`)
+### Telegram verbs (requires `pip install 'telegram-agent[telegram]'`)
 
 ```bash
 # read-only: count + admins + bot's own permissions
-telek group roster --chat @announcements --json
+telegram-agent group roster --chat @announcements --json
 
 # write (dry-run by default; --apply to commit)
-telek bot send --chat @announcements --text "hello" --parse-mode markdown
-telek bot send --chat @announcements --text "hello" --apply
+telegram-agent bot send --chat @announcements --text "hello" --parse-mode markdown
+telegram-agent bot send --chat @announcements --text "hello" --apply
 
 # pin / unpin (also dry-run by default)
-telek group pin --chat @announcements --message 123 --apply
-telek group pin --chat @announcements --unpin --apply
+telegram-agent group pin --chat @announcements --message 123 --apply
+telegram-agent group pin --chat @announcements --unpin --apply
 ```
 ````
 
@@ -2136,20 +2136,20 @@ Open `CHANGELOG.md`. Replace the most recent unreleased / placeholder entry with
 
 ### Added
 
-- Telegram surface (Bot API): `telek bot send`, `telek group roster`,
-  `telek group pin`. Writes are dry-run by default; pass `--apply` to
+- Telegram surface (Bot API): `telegram-agent bot send`, `telegram-agent group roster`,
+  `telegram-agent group pin`. Writes are dry-run by default; pass `--apply` to
   commit. Validated-preview dry-run runs `getMe`/`getChat`/
   `getChatMember` (plus per-verb permission asserts) before printing the
   plan, so foot-guns (invalid chat, missing permission, locked group)
   surface before any side effect.
-- `TELEK_BOT_TOKEN` loading from environment or `.env` (cwd, then nearest
+- `TELEGRAM_AGENT_BOT_TOKEN` loading from environment or `.env` (cwd, then nearest
   git root; process env always wins). World/group-writable `.env` files
   are skipped with a warning.
 - Vendored `.claude/skills/telegram/` agent wrapper (SKILL.md + send/roster/
   pin scripts).
 - New optional dependency: `python-telegram-bot>=21,<22` under
   `[project.optional-dependencies] telegram`. Core install stays
-  zero-dep; install with `pip install 'telek[telegram]'`.
+  zero-dep; install with `pip install 'telegram-agent[telegram]'`.
 
 ### Notes
 
@@ -2164,21 +2164,21 @@ Run all of the following in parallel where independent; sequentially otherwise:
 
 ```bash
 uv sync --extra telegram
-uv run pytest -n auto --cov=telek --cov-report=term -v
-uv run black --check telek tests
-uv run isort --check-only telek tests
-uv run flake8 telek tests
-uv run bandit -c pyproject.toml -r telek
-uv run telek --version
+uv run pytest -n auto --cov=telegram_agent --cov-report=term -v
+uv run black --check telegram_agent tests
+uv run isort --check-only telegram_agent tests
+uv run flake8 telegram_agent tests
+uv run bandit -c pyproject.toml -r telegram_agent
+uv run telegram-agent --version
 ```
 
 Expected:
 
 - pytest: all tests pass, coverage ≥ 60%.
 - black / isort / flake8 / bandit: clean.
-- `telek --version`: prints `telek 0.2.0`.
+- `telegram-agent --version`: prints `telegram-agent 0.2.0`.
 
-If black or isort complain, apply the fixes (`uv run black telek tests` / `uv run isort telek tests`) and re-commit just those fixups.
+If black or isort complain, apply the fixes (`uv run black telegram_agent tests` / `uv run isort telegram_agent tests`) and re-commit just those fixups.
 
 - [ ] **Step 7: Commit**
 
@@ -2206,24 +2206,24 @@ gh pr create --title "v0.2: Telegram surface (bot send / group roster / group pi
   --body "$(cat <<'EOF'
 ## Summary
 
-- Adds `telek bot send`, `telek group roster`, `telek group pin` over the Bot API.
+- Adds `telegram-agent bot send`, `telegram-agent group roster`, `telegram-agent group pin` over the Bot API.
 - Dry-run by default on write verbs (`send`, `pin`); `--apply` required to commit.
 - Validated-preview dry-run hits `getMe` / `getChat` / `getChatMember` and per-verb permission asserts before any side effect.
-- `.env`-aware `TELEK_BOT_TOKEN` loading with redaction at the output chokepoint.
+- `.env`-aware `TELEGRAM_AGENT_BOT_TOKEN` loading with redaction at the output chokepoint.
 - Vendored `.claude/skills/telegram/` agent wrapper (SKILL.md + 3 scripts).
 - `python-telegram-bot>=21,<22` added under `[project.optional-dependencies] telegram` — core install stays zero-dep.
 
 ## Test plan
 
-- [ ] `uv run pytest -n auto --cov=telek --cov-report=term -v` — all green, coverage ≥ 60%.
-- [ ] `uv run black --check telek tests && uv run isort --check-only telek tests && uv run flake8 telek tests` — clean.
-- [ ] `uv run bandit -c pyproject.toml -r telek` — clean.
+- [ ] `uv run pytest -n auto --cov=telegram_agent --cov-report=term -v` — all green, coverage ≥ 60%.
+- [ ] `uv run black --check telegram_agent tests && uv run isort --check-only telegram_agent tests && uv run flake8 telegram_agent tests` — clean.
+- [ ] `uv run bandit -c pyproject.toml -r telegram_agent` — clean.
 - [ ] `markdownlint-cli2 "**/*.md" "#node_modules"` — clean.
-- [ ] Manual end-to-end against a real bot token + test chat: `telek bot send --chat <test> --text "hi"` (dry-run shape), then `--apply`.
-- [ ] Manual: `telek group roster --chat <test> --json` returns the expected shape.
-- [ ] Manual: `telek group pin --chat <test> --message <id> --apply` pins; `--unpin --apply` removes.
+- [ ] Manual end-to-end against a real bot token + test chat: `telegram-agent bot send --chat <test> --text "hi"` (dry-run shape), then `--apply`.
+- [ ] Manual: `telegram-agent group roster --chat <test> --json` returns the expected shape.
+- [ ] Manual: `telegram-agent group pin --chat <test> --message <id> --apply` pins; `--unpin --apply` removes.
 
-- telek (Claude)
+- telegram-agent (Claude)
 EOF
 )"
 ```

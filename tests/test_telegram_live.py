@@ -4,9 +4,9 @@ Skipped automatically when the gating env vars are absent (so CI is
 unaffected). Run manually with the chat IDs of a private chat the bot
 can DM and a group/supergroup the bot is a member (and admin) of:
 
-    export TELEK_BOT_TOKEN=...
-    export TELEK_LIVE_TEST_USER_CHAT=6558999365         # numeric user chat_id
-    export TELEK_LIVE_TEST_GROUP_CHAT=-1003852081102    # numeric group chat_id
+    export TELEGRAM_AGENT_BOT_TOKEN=...
+    export TELEGRAM_AGENT_LIVE_TEST_USER_CHAT=6558999365         # numeric user chat_id
+    export TELEGRAM_AGENT_LIVE_TEST_GROUP_CHAT=-1003852081102    # numeric group chat_id
     uv run pytest tests/test_telegram_live.py -v
 
 These tests send real messages and pin/unpin in the target group.
@@ -19,8 +19,8 @@ import os
 
 import pytest
 
-from telek.cli import main
-from telek.telegram._config import load_token
+from telegram_agent.cli import main
+from telegram_agent.telegram._config import load_token
 
 pytestmark = pytest.mark.live
 
@@ -34,18 +34,18 @@ def _need_env(name: str) -> str:
 
 @pytest.fixture(scope="module")
 def user_chat() -> str:
-    return _need_env("TELEK_LIVE_TEST_USER_CHAT")
+    return _need_env("TELEGRAM_AGENT_LIVE_TEST_USER_CHAT")
 
 
 @pytest.fixture(scope="module")
 def group_chat() -> str:
-    return _need_env("TELEK_LIVE_TEST_GROUP_CHAT")
+    return _need_env("TELEGRAM_AGENT_LIVE_TEST_GROUP_CHAT")
 
 
 @pytest.fixture(scope="module", autouse=True)
 def _ensure_token():
     if not load_token():
-        pytest.skip("TELEK_BOT_TOKEN not set (env or .env)")
+        pytest.skip("TELEGRAM_AGENT_BOT_TOKEN not set (env or .env)")
 
 
 def _last_json(capsys) -> dict:
@@ -54,7 +54,17 @@ def _last_json(capsys) -> dict:
 
 
 def test_bot_send_dry_run_to_user(user_chat, capsys):
-    rc = main(["bot", "send", "--chat", user_chat, "--text", "telek live: dry-run probe", "--json"])
+    rc = main(
+        [
+            "bot",
+            "send",
+            "--chat",
+            user_chat,
+            "--text",
+            "telegram-agent live: dry-run probe",
+            "--json",
+        ]
+    )
     assert (rc or 0) == 0
     payload = _last_json(capsys)
     assert payload["verb"] == "bot.send"
@@ -64,7 +74,16 @@ def test_bot_send_dry_run_to_user(user_chat, capsys):
 
 def test_bot_send_apply_to_user(user_chat, capsys):
     rc = main(
-        ["bot", "send", "--chat", user_chat, "--text", "telek live smoke (DM)", "--apply", "--json"]
+        [
+            "bot",
+            "send",
+            "--chat",
+            user_chat,
+            "--text",
+            "telegram-agent live smoke (DM)",
+            "--apply",
+            "--json",
+        ]
     )
     assert (rc or 0) == 0
     payload = _last_json(capsys)
@@ -93,7 +112,7 @@ def test_group_send_pin_unpin_cycle(group_chat, capsys):
             "--chat",
             group_chat,
             "--text",
-            "telek live smoke (will be pinned then unpinned)",
+            "telegram-agent live smoke (will be pinned then unpinned)",
             "--apply",
             "--json",
         ]

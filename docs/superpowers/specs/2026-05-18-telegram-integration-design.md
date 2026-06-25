@@ -1,11 +1,11 @@
 # Telegram integration (v0.2)
 
 **Status:** Design — approved through brainstorming, awaiting written review.
-**Author:** telek (Claude)
+**Author:** telegram-agent (Claude)
 **Date:** 2026-05-18
 **Target version:** `0.2.0`
-**Tracks roadmap item:** v0.2 — "Telegram surface: `telek bot send`, `telek group roster`,
-`telek group pin`. Brings `python-telegram-bot` as the first runtime dependency. Every write
+**Tracks roadmap item:** v0.2 — "Telegram surface: `telegram-agent bot send`, `telegram-agent group roster`,
+`telegram-agent group pin`. Brings `python-telegram-bot` as the first runtime dependency. Every write
 verb dry-run by default."
 
 ## 1. Summary
@@ -25,13 +25,13 @@ payload that a full member list is not retrievable via the Bot API.
 
 ### In scope (v0.2)
 
-- `telek bot send` — send a message to a chat / channel.
-- `telek group roster` — list what the Bot API exposes about a group: count, admins,
+- `telegram-agent bot send` — send a message to a chat / channel.
+- `telegram-agent group roster` — list what the Bot API exposes about a group: count, admins,
   bot's own permissions.
-- `telek group pin` — pin or unpin a message in a chat.
+- `telegram-agent group pin` — pin or unpin a message in a chat.
 - `python-telegram-bot` as an **optional** runtime dependency
-  (`pip install 'telek[telegram]'`); core `pip install telek` stays zero-dep.
-- `TELEK_BOT_TOKEN` loading from environment or `.env` (process env wins).
+  (`pip install 'telegram-agent[telegram]'`); core `pip install telegram-agent` stays zero-dep.
+- `TELEGRAM_AGENT_BOT_TOKEN` loading from environment or `.env` (process env wins).
 - A vendored `.claude/skills/telegram/` skill mirroring the existing skill conventions.
 - Validated-preview dry-run on writes (token required; no offline mode in v0.2).
 
@@ -51,16 +51,16 @@ payload that a full member list is not retrievable via the Bot API.
 ### 3.1 Module layout
 
 ```text
-telek/
+telegram_agent/
 ├── telegram/
 │   ├── __init__.py            # re-exports TelegramClient, load_token, redact
 │   ├── _client.py             # TelegramClient sync façade over python-telegram-bot
 │   ├── _config.py             # load_token(), redact(), .env discovery
-│   ├── _errors.py             # wrap(exc) -> TelekError mapping table
+│   ├── _errors.py             # wrap(exc) -> TelegramAgentError mapping table
 │   └── _plan.py               # ValidatedPlan dataclass + verb-specific intents
 └── cli/_commands/
-    ├── bot.py                 # `telek bot send`
-    └── group.py               # `telek group roster`, `telek group pin`
+    ├── bot.py                 # `telegram-agent bot send`
+    └── group.py               # `telegram-agent group roster`, `telegram-agent group pin`
 ```
 
 ### 3.2 Sync façade
@@ -79,11 +79,11 @@ and lets tests substitute a fake without touching asyncio.
 telegram = ["python-telegram-bot>=21,<22"]
 ```
 
-Importing `telek.telegram._client` succeeds without the lib installed; instantiating
+Importing `telegram_agent.telegram._client` succeeds without the lib installed; instantiating
 `TelegramClient()` is what triggers the import, and any `ImportError` is caught and
-re-raised as `TelekError(code=EXIT_ENV_ERROR, message="python-telegram-bot not
-installed", remediation="pip install 'telek[telegram]'")`. CLI verbs only construct the
-client after argparse succeeds, so `telek --help` / `telek learn` keep working without the
+re-raised as `TelegramAgentError(code=EXIT_ENV_ERROR, message="python-telegram-bot not
+installed", remediation="pip install 'telegram-agent[telegram]'")`. CLI verbs only construct the
+client after argparse succeeds, so `telegram-agent --help` / `telegram-agent learn` keep working without the
 extra installed.
 
 ## 4. CLI surface
@@ -93,10 +93,10 @@ the existing `learn` / `explain` / `whoami` verbs. Targets accept either a numer
 or `@username`; the parser normalizes to a single `--chat` string and the client resolves
 it via `getChat`.
 
-### 4.1 `telek bot send`
+### 4.1 `telegram-agent bot send`
 
 ```text
-telek bot send --chat <id|@name>
+telegram-agent bot send --chat <id|@name>
                (--text <s> | --text-stdin)
                [--parse-mode markdown|html|none]
                [--silent]
@@ -114,10 +114,10 @@ telek bot send --chat <id|@name>
   `{verb, chat: {id, type, title, username?}, message_id?, sent_at?, dry_run,
    intent: {text_preview, parse_mode, silent, reply_to?}, bot_self, warnings}`.
 
-### 4.2 `telek group roster`
+### 4.2 `telegram-agent group roster`
 
 ```text
-telek group roster --chat <id|@name> [--json]
+telegram-agent group roster --chat <id|@name> [--json]
 ```
 
 - Read-only; no `--apply`.
@@ -127,10 +127,10 @@ telek group roster --chat <id|@name> [--json]
    limits: {note: "Bot API does not expose full member list"}}`.
 - Text mode renders a compact two-section view: chat metadata, then an admin table.
 
-### 4.3 `telek group pin`
+### 4.3 `telegram-agent group pin`
 
 ```text
-telek group pin --chat <id|@name>
+telegram-agent group pin --chat <id|@name>
                 [--message <msg_id>]
                 [--silent]
                 [--unpin]
@@ -151,13 +151,13 @@ telek group pin --chat <id|@name>
 Unchanged from existing policy: `0` success, `1` user error (missing flag, malformed
 chat, missing permission), `2` env error (no token, lib not installed, network / API
 failure, rate-limited). Every error carries `{code, message, remediation}` and is emitted
-through `telek/cli/_output.py::emit_error`.
+through `telegram_agent/cli/_output.py::emit_error`.
 
 ## 5. Authentication and configuration
 
 ### 5.1 Token loading
 
-`telek/telegram/_config.py::load_token()` resolves `TELEK_BOT_TOKEN` from, in order:
+`telegram_agent/telegram/_config.py::load_token()` resolves `TELEGRAM_AGENT_BOT_TOKEN` from, in order:
 
 1. Process environment (`os.environ`).
 2. A `.env` file in the current working directory.
@@ -182,32 +182,32 @@ permission check entirely.
 
 Required for every verb in v0.2 (all three hit the Bot API; there is no offline mode).
 Missing token raises
-`TelekError(EXIT_ENV_ERROR, "TELEK_BOT_TOKEN not set",
-"set TELEK_BOT_TOKEN in your environment or a local .env file
+`TelegramAgentError(EXIT_ENV_ERROR, "TELEGRAM_AGENT_BOT_TOKEN not set",
+"set TELEGRAM_AGENT_BOT_TOKEN in your environment or a local .env file
 (get the token from @BotFather)")`.
 
 ### 5.4 Redaction
 
 A single chokepoint `_config.redact(s: str) -> str` masks any occurrence of the loaded
-token before stdout, stderr, or `TelekError` messages cross the wire. Invariants:
+token before stdout, stderr, or `TelegramAgentError` messages cross the wire. Invariants:
 
 - The token never appears in `--json` payloads (no token field is ever serialized).
 - The token never appears in error messages — every `telegram.error.TelegramError` is
   caught at the client boundary and its `.message` is run through `redact()` before being
-  wrapped into a `TelekError`.
-- `telek whoami` reports "bot token configured" as a boolean — no length, no prefix, no
+  wrapped into a `TelegramAgentError`.
+- `telegram-agent whoami` reports "bot token configured" as a boolean — no length, no prefix, no
   last-N characters.
 
 ## 6. Validated-preview semantics
 
 Every verb runs a fixed read-only probe sequence via `TelegramClient.validate(plan)
--> ValidatedPlan`; if any probe fails the verb stops with a `TelekError` and `--apply` is
+-> ValidatedPlan`; if any probe fails the verb stops with a `TelegramAgentError` and `--apply` is
 never reached.
 
 ### 6.1 Shared probes (every verb)
 
 1. `getMe()` — confirms the token is valid; yields `bot_self.user_id`. `401 Unauthorized`
-   → `EXIT_ENV_ERROR` with remediation `"check TELEK_BOT_TOKEN — token rejected by
+   → `EXIT_ENV_ERROR` with remediation `"check TELEGRAM_AGENT_BOT_TOKEN — token rejected by
    Telegram"`.
 2. `getChat(chat)` — resolves `--chat` into a `Chat` object (id, type, title, username).
    `400 Bad Request: chat not found` → `EXIT_USER_ERROR` with remediation `"verify chat
@@ -247,7 +247,7 @@ predictable.
 ### 6.4 Rate limits and retries
 
 No retries in v0.2. `telegram.error.RetryAfter` surfaces as
-`TelekError(EXIT_ENV_ERROR, "rate limited; retry after <n>s",
+`TelegramAgentError(EXIT_ENV_ERROR, "rate limited; retry after <n>s",
 "wait and retry; v0.2 does not auto-retry")` with `n` taken from Telegram's payload.
 
 ## 7. Skill wrapper
@@ -267,10 +267,10 @@ Frontmatter `name: telegram` matching the directory name (per the repo's skills
 convention). Content sections:
 
 - **When to use** — bullets keyed off intent (announcing, moderating, auditing).
-- **Prerequisites** — `pip install 'telek[telegram]'` plus `TELEK_BOT_TOKEN` in env or
+- **Prerequisites** — `pip install 'telegram-agent[telegram]'` plus `TELEGRAM_AGENT_BOT_TOKEN` in env or
   `.env`. Short walkthrough: create a bot with @BotFather, add it to the chat, promote it
   to admin for write verbs.
-- **Verbs** — table mapping each script to the underlying `telek` invocation, with the
+- **Verbs** — table mapping each script to the underlying `telegram-agent` invocation, with the
   dry-run / `--apply` contract in bold.
 - **Recipes** — three canonical examples: send a markdown announcement; capture
   `message_id` from a prior send's JSON and pin it; print the admin list as a table.
@@ -287,7 +287,7 @@ Each script is thin and identical in shape, providing only:
    `"sending real message to <chat title>; ctrl-c within 1s to abort"`. Tiny safety net
    for terminal use; not load-bearing in agent loops where `--apply` is deliberate.
 
-Scripts require only `bash`, `jq`, and `telek` on `PATH`. `jq` is already a baseline
+Scripts require only `bash`, `jq`, and `telegram-agent` on `PATH`. `jq` is already a baseline
 assumption (the sibling `communicate` skill uses it). No new tooling.
 
 ### 7.3 Signature handling
@@ -298,17 +298,17 @@ this explicitly so agents do not append GitHub-style signatures by accident.
 
 ### 7.4 Provenance
 
-`docs/skill-sources.md` gets a new row noting the `telegram` skill is original to telek
+`docs/skill-sources.md` gets a new row noting the `telegram` skill is original to telegram-agent
 (not vendored from steward).
 
 ## 8. Error mapping
 
-`telek/telegram/_errors.py::wrap(exc) -> TelekError` is the only place
-`python-telegram-bot` exceptions cross into the rest of telek.
+`telegram_agent/telegram/_errors.py::wrap(exc) -> TelegramAgentError` is the only place
+`python-telegram-bot` exceptions cross into the rest of telegram-agent.
 
-| `telegram.error` exception | Telek message | Remediation | Code |
+| `telegram.error` exception | TelegramAgent message | Remediation | Code |
 |---|---|---|---|
-| `InvalidToken`, `Unauthorized` | `"telegram rejected bot token"` | `"check TELEK_BOT_TOKEN with @BotFather"` | env (2) |
+| `InvalidToken`, `Unauthorized` | `"telegram rejected bot token"` | `"check TELEGRAM_AGENT_BOT_TOKEN with @BotFather"` | env (2) |
 | `BadRequest("chat not found")` | `"chat not found: <chat>"` | `"verify id/username; ensure the bot is a member"` | user (1) |
 | `BadRequest("not enough rights" \| "have no rights")` | `"bot lacks required permission: <verb-specific>"` | `"promote the bot and grant the needed permission"` | user (1) |
 | `Forbidden("bot was kicked" \| "bot is not a member")` | `"bot is not in this chat"` | `"add the bot to the chat first"` | user (1) |
@@ -338,14 +338,14 @@ in an upstream error string never escapes.
 - **`.env` loader test.** Covers precedence (env wins), missing file (no-op), malformed
   line (skipped with warning), world-writable file (warning, file skipped).
 - **Live network tests are out of scope for v0.2.** A future
-  `tests/integration/test_telegram_live.py` gated on `TELEK_LIVE_TEST_CHAT` plus
-  `TELEK_BOT_TOKEN` can land later; CI never runs it.
+  `tests/integration/test_telegram_live.py` gated on `TELEGRAM_AGENT_LIVE_TEST_CHAT` plus
+  `TELEGRAM_AGENT_BOT_TOKEN` can land later; CI never runs it.
 - **Coverage target.** Stays at the existing `fail_under = 60` in `pyproject.toml`.
 
 ## 10. Documentation and release
 
 - README "Status" section updates to reflect that v0.2 has landed with the three verbs.
-- README "Usage" section adds a Telegram subsection with `telek bot send --help`
+- README "Usage" section adds a Telegram subsection with `telegram-agent bot send --help`
   examples.
 - README "Configuration" table adds `.env` precedence note.
 - `CHANGELOG.md` gets a `[0.2.0]` entry per Keep-a-Changelog.
@@ -357,7 +357,7 @@ in an upstream error string never escapes.
 
 None blocking. The following are deferred to v0.3+ design notes:
 
-- Whether to add `telek bot whoami-self` (Bot API `getMe` exposed as a verb) for
-  diagnostics, or roll it into `telek whoami` when a token is present.
+- Whether to add `telegram-agent bot whoami-self` (Bot API `getMe` exposed as a verb) for
+  diagnostics, or roll it into `telegram-agent whoami` when a token is present.
 - Whether `roster --watch` (long-running) belongs as a CLI verb or a separate daemon.
 - Whether the skill should grow a `bot-bootstrap.sh` that walks through @BotFather setup.

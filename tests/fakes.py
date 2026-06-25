@@ -14,7 +14,7 @@ class _Call:
 
 @dataclass
 class FakeTelegramClient:
-    """In-memory stand-in for telek.telegram.TelegramClient."""
+    """In-memory stand-in for telegram_agent.telegram.TelegramClient."""
 
     token: str | None = "fake-token"
     me: dict[str, Any] = field(default_factory=lambda: {"user_id": 42, "username": "fake_bot"})

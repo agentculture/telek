@@ -1,14 +1,14 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code when working in `telek`.
+This file provides guidance to Claude Code when working in `telegram-agent`.
 
 ## Workspace layout
 
-`telek` lives alongside its sibling repos in a shared workspace. Skills
+`telegram-agent` lives alongside its sibling repos in a shared workspace. Skills
 that reach across siblings (e.g. `communicate`'s mesh-message helper) use
 workspace-relative paths configured in `.claude/skills.local.yaml`.
 
-## What telek is
+## What telegram-agent is
 
 Agent-first Telegram community management tools — moderation, roster
 inspection, pinned-post hygiene, scheduled announcements. A sibling of
@@ -19,18 +19,18 @@ AgentCulture agents; conforms to
 ## Project shape
 
 ```text
-telek/
-├── telek/                       # Python package
+telegram-agent/
+├── telegram_agent/                       # Python package
 │   ├── __init__.py              # __version__ via importlib.metadata
-│   ├── __main__.py              # `python -m telek` entry
+│   ├── __main__.py              # `python -m telegram_agent` entry
 │   └── cli/
 │       ├── __init__.py          # argparse root + _dispatch + main()
-│       ├── _errors.py           # TelekError + EXIT_USER_ERROR / EXIT_ENV_ERROR
+│       ├── _errors.py           # TelegramAgentError + EXIT_USER_ERROR / EXIT_ENV_ERROR
 │       ├── _output.py           # emit_result / emit_error / emit_diagnostic
 │       └── _commands/
-│           ├── learn.py         # `telek learn`
-│           ├── explain.py       # `telek explain <path>...`
-│           └── whoami.py        # `telek whoami`
+│           ├── learn.py         # `telegram-agent learn`
+│           ├── explain.py       # `telegram-agent explain <path>...`
+│           └── whoami.py        # `telegram-agent whoami`
 ├── tests/
 │   └── test_cli.py              # CLI smoke tests (capsys; no Click)
 ├── .claude/
@@ -59,13 +59,13 @@ telek/
 
 ```bash
 uv sync                                                       # install deps
-uv run pytest -n auto --cov=telek --cov-report=term -v        # tests + coverage
-uv run black --check telek tests                              # formatting
-uv run isort --check-only telek tests                         # import order
-uv run flake8 telek tests                                     # lint
-uv run bandit -c pyproject.toml -r telek                      # security
+uv run pytest -n auto --cov=telegram_agent --cov-report=term -v        # tests + coverage
+uv run black --check telegram_agent tests                              # formatting
+uv run isort --check-only telegram_agent tests                         # import order
+uv run flake8 telegram_agent tests                                     # lint
+uv run bandit -c pyproject.toml -r telegram_agent                      # security
 markdownlint-cli2 "**/*.md" "#node_modules"                   # markdown lint
-uv run telek --version                                        # smoke test
+uv run telegram-agent --version                                        # smoke test
 python .claude/skills/version-bump/scripts/bump.py patch      # bump version
 ```
 
@@ -77,7 +77,7 @@ Publishing is automated: TestPyPI on PRs (non-fork), PyPI on push to
 - **Python ≥3.12**, hatchling backend, **zero runtime deps** in
   `pyproject.toml` (Telegram libs added in a later PR alongside the
   domain code).
-- **CLI shape** modeled on `afi-cli`: argparse with `_TelekArgumentParser`
+- **CLI shape** modeled on `afi-cli`: argparse with `_TelegramAgentArgumentParser`
   routing errors through `emit_error` so no Python tracebacks leak.
 - **Every PR bumps the version** in `pyproject.toml` and prepends a
   CHANGELOG entry — the `version-check` CI job enforces this. No
@@ -85,10 +85,10 @@ Publishing is automated: TestPyPI on PRs (non-fork), PyPI on push to
 - **`--json` everywhere** that produces a listing or report. Errors in
   JSON mode emit `{code, message, remediation}` to stderr; text mode
   renders `error: ... / hint: ...`.
-- **Mutation safety** (load-bearing for telek): every Telegram-side write
+- **Mutation safety** (load-bearing for telegram-agent): every Telegram-side write
   verb (when domain code lands) defaults to dry-run; `--apply` to commit.
 - **GitHub signatures.** Posts (PRs, comments, cross-repo issues) sign as
-  `- telek (Claude)`. The `cicd` and `communicate` skills auto-apply this
+  `- telegram-agent (Claude)`. The `cicd` and `communicate` skills auto-apply this
   via `agtag` — don't hand-author the trailing nick.
 - **Bot tokens, group IDs, webhook secrets are never committed.** Live in
   repo secrets or git-ignored `.env`.
@@ -114,8 +114,8 @@ read the local file first, falling back to the example.
 
 ## Roadmap
 
-- **v0.2 (next PR):** Telegram surface — `telek bot send`,
-  `telek group roster`, `telek group pin`. Brings `python-telegram-bot`
+- **v0.2 (next PR):** Telegram surface — `telegram-agent bot send`,
+  `telegram-agent group roster`, `telegram-agent group pin`. Brings `python-telegram-bot`
   as the first runtime dependency. Every write verb dry-run by default.
 - **v0.3+:** Scheduled announcements, moderation rules,
-  `telek explain bot send` catalog entries.
+  `telegram-agent explain bot send` catalog entries.

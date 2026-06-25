@@ -30,7 +30,7 @@ jobs:
 
       - run: uv sync --extra telegram
 
-      - run: uv run pytest -n auto --cov=telek --cov-report=xml:coverage.xml --cov-report=term -v
+      - run: uv run pytest -n auto --cov=telegram_agent --cov-report=xml:coverage.xml --cov-report=term -v
 
       - name: SonarCloud Scan
         if: env.SONAR_TOKEN != ''
@@ -40,17 +40,17 @@ jobs:
 
   live-smoke:
     # Runs the live Bot API smoke tests against the real chats configured
-    # in repo secrets. Gated on TELEK_BOT_TOKEN being present (promoted to
+    # in repo secrets. Gated on TELEGRAM_AGENT_BOT_TOKEN being present (promoted to
     # job env so `if:` can reference it — `secrets.*` isn't allowed there).
-    # Fork PRs and forks of telek don't receive secrets, so this job is a
+    # Fork PRs and forks of telegram-agent don't receive secrets, so this job is a
     # no-op there instead of a hard fail.
     runs-on: ubuntu-latest
     permissions:
       contents: read
     env:
-      TELEK_BOT_TOKEN: ${{ secrets.TELEK_BOT_TOKEN }}
-      TELEK_LIVE_TEST_USER_CHAT: ${{ secrets.TELEK_LIVE_TEST_USER_CHAT }}
-      TELEK_LIVE_TEST_GROUP_CHAT: ${{ secrets.TELEK_LIVE_TEST_GROUP_CHAT }}
+      TELEGRAM_AGENT_BOT_TOKEN: ${{ secrets.TELEGRAM_AGENT_BOT_TOKEN }}
+      TELEGRAM_AGENT_LIVE_TEST_USER_CHAT: ${{ secrets.TELEGRAM_AGENT_LIVE_TEST_USER_CHAT }}
+      TELEGRAM_AGENT_LIVE_TEST_GROUP_CHAT: ${{ secrets.TELEGRAM_AGENT_LIVE_TEST_GROUP_CHAT }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
@@ -61,7 +61,7 @@ jobs:
       - run: uv sync --extra telegram
 
       - name: Live smoke (Bot API)
-        if: env.TELEK_BOT_TOKEN != ''
+        if: env.TELEGRAM_AGENT_BOT_TOKEN != ''
         run: uv run pytest tests/test_telegram_live.py -v
 
   lint:
@@ -82,16 +82,16 @@ jobs:
       - run: uv sync
 
       - name: black --check
-        run: uv run black --check telek tests
+        run: uv run black --check telegram_agent tests
 
       - name: isort --check
-        run: uv run isort --check-only telek tests
+        run: uv run isort --check-only telegram_agent tests
 
       - name: flake8
-        run: uv run flake8 telek tests
+        run: uv run flake8 telegram_agent tests
 
       - name: bandit
-        run: uv run bandit -c pyproject.toml -r telek
+        run: uv run bandit -c pyproject.toml -r telegram_agent
 
       - name: markdownlint-cli2
         run: |

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-# Send a Telegram message via `telek bot send`. Defaults to --json.
+# Send a Telegram message via `telegram-agent bot send`. Defaults to --json.
 # Pass --apply to actually send (dry-run otherwise).
 
 for arg in "$@"; do
@@ -11,4 +11,4 @@ for arg in "$@"; do
   fi
 done
 
-exec uv run telek bot send --json "$@"
+exec uv run telegram-agent bot send --json "$@"

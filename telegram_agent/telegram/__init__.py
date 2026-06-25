@@ -1,8 +1,8 @@
 """Telegram integration package — Bot API client behind a sync façade."""
 
-from telek.telegram._client import TelegramClient
-from telek.telegram._config import TOKEN_ENV_VAR, load_token, redact
-from telek.telegram._plan import (
+from telegram_agent.telegram._client import TelegramClient
+from telegram_agent.telegram._config import TOKEN_ENV_VAR, load_token, redact
+from telegram_agent.telegram._plan import (
     PinIntent,
     RosterIntent,
     SendIntent,

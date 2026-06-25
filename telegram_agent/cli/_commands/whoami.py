@@ -1,4 +1,4 @@
-"""``telek whoami`` — smallest auth probe.
+"""``telegram-agent whoami`` — smallest auth probe.
 
 Reports the agent's identity (from `culture.yaml`), package version, and
 whether the Telegram bot token is configured in the environment. Does NOT
@@ -11,17 +11,17 @@ import argparse
 import os
 from pathlib import Path
 
-from telek import __version__
-from telek.cli._output import emit_result
+from telegram_agent import __version__
+from telegram_agent.cli._output import emit_result
 
-_BOT_TOKEN_ENV = "TELEK_BOT_TOKEN"  # nosec B105 - env var name, not a credential
-_FALLBACK_NICK = "telek"
+_BOT_TOKEN_ENV = "TELEGRAM_AGENT_BOT_TOKEN"  # nosec B105 - env var name, not a credential
+_FALLBACK_NICK = "telegram-agent"
 
 
 def _find_culture_yaml() -> Path | None:
-    """Locate telek's own ``culture.yaml`` by walking up from this module.
+    """Locate telegram-agent's own ``culture.yaml`` by walking up from this module.
 
-    The nick must be telek's identity, not whatever ``culture.yaml`` happens
+    The nick must be telegram-agent's identity, not whatever ``culture.yaml`` happens
     to sit in the user's current working directory. In an editable / source
     install, walking up from ``__file__`` finds the repo root; in a wheel
     install, no ``culture.yaml`` exists alongside the installed package and
@@ -36,11 +36,11 @@ def _find_culture_yaml() -> Path | None:
 
 
 def _read_nick() -> str:
-    """Return the first agent suffix from telek's ``culture.yaml``, or the fallback.
+    """Return the first agent suffix from telegram_agent's ``culture.yaml``, or the fallback.
 
-    Parsed without a YAML dependency to keep telek's runtime deps empty.
+    Parsed without a YAML dependency to keep telegram-agent's runtime deps empty.
     Looks for the first ``suffix: <value>`` line under ``agents:``; anything
-    fancier than the documented two-line shape falls back to ``telek``.
+    fancier than the documented two-line shape falls back to ``telegram-agent``.
     """
     cfg = _find_culture_yaml()
     if cfg is None:
@@ -85,7 +85,7 @@ def cmd_whoami(args: argparse.Namespace) -> None:
 def register(sub: argparse._SubParsersAction) -> None:
     p = sub.add_parser(
         "whoami",
-        help="Report agent nick, version, and whether TELEK_BOT_TOKEN is set.",
+        help="Report agent nick, version, and whether TELEGRAM_AGENT_BOT_TOKEN is set.",
     )
     p.add_argument("--json", action="store_true", help="Emit structured JSON.")
     p.set_defaults(func=cmd_whoami)

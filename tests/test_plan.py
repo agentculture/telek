@@ -1,8 +1,8 @@
-"""Tests for telek.telegram._plan.ValidatedPlan.to_dict()."""
+"""Tests for telegram_agent.telegram._plan.ValidatedPlan.to_dict()."""
 
 from __future__ import annotations
 
-from telek.telegram._plan import (
+from telegram_agent.telegram._plan import (
     PinIntent,
     RosterIntent,
     SendIntent,

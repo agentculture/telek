@@ -11,9 +11,9 @@ import os
 import stat
 from pathlib import Path
 
-from telek.cli._output import emit_diagnostic
+from telegram_agent.cli._output import emit_diagnostic
 
-TOKEN_ENV_VAR = "TELEK_BOT_TOKEN"  # nosec B105 — env-var name, not a credential
+TOKEN_ENV_VAR = "TELEGRAM_AGENT_BOT_TOKEN"  # nosec B105 — env-var name, not a credential
 
 
 def _parse_env_file(path: Path) -> dict[str, str]:
@@ -72,7 +72,7 @@ def _find_dotenv_paths(cwd: Path) -> list[Path]:
 
 
 def load_token(cwd: Path | None = None) -> str | None:
-    """Resolve TELEK_BOT_TOKEN from env or .env. Returns None if unset."""
+    """Resolve TELEGRAM_AGENT_BOT_TOKEN from env or .env. Returns None if unset."""
     env_value = os.environ.get(TOKEN_ENV_VAR)
     if env_value:
         return env_value

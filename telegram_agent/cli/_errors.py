@@ -1,8 +1,8 @@
-"""TelekError and exit-code policy.
+"""TelegramAgentError and exit-code policy.
 
-Every failure inside telek raises :class:`TelekError`. The top-level
-``main()`` catches it, formats via :mod:`telek.cli._output`, and exits with
-:attr:`TelekError.code`. This guarantees:
+Every failure inside telegram-agent raises :class:`TelegramAgentError`. The top-level
+``main()`` catches it, formats via :mod:`telegram_agent.cli._output`, and exits with
+:attr:`TelegramAgentError.code`. This guarantees:
 
 * no Python traceback leaks to stderr (agent-first error rubric);
 * every error has a structured shape ``{code, message, remediation}``;
@@ -17,7 +17,7 @@ from dataclasses import dataclass
 # 0      = success
 # 1      = user-input error (bad flag, missing required arg, unknown path)
 # 2      = environment / setup error (tool not installed, file unreadable,
-#          required env var missing — e.g. TELEK_BOT_TOKEN when a write
+#          required env var missing — e.g. TELEGRAM_AGENT_BOT_TOKEN when a write
 #          verb tries to commit)
 # 3+     = reserved
 EXIT_SUCCESS = 0
@@ -26,8 +26,8 @@ EXIT_ENV_ERROR = 2
 
 
 @dataclass
-class TelekError(Exception):
-    """Structured error raised within telek; carries a remediation hint for agents."""
+class TelegramAgentError(Exception):
+    """Structured error raised within telegram-agent; carries a remediation hint for agents."""
 
     code: int
     message: str

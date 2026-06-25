@@ -1,4 +1,4 @@
-"""`telek bot ...` — bot-scoped Telegram verbs."""
+"""`telegram-agent bot ...` — bot-scoped Telegram verbs."""
 
 from __future__ import annotations
 
@@ -6,15 +6,15 @@ import argparse
 import sys
 from typing import Any
 
-from telek.cli._errors import EXIT_ENV_ERROR, EXIT_USER_ERROR, TelekError
-from telek.cli._output import emit_result
-from telek.telegram import (
+from telegram_agent.cli._errors import EXIT_ENV_ERROR, EXIT_USER_ERROR, TelegramAgentError
+from telegram_agent.cli._output import emit_result
+from telegram_agent.telegram import (
     SendIntent,
     TelegramClient,
     ValidatedPlan,
     load_token,
 )
-from telek.telegram._errors import wrap as wrap_telegram_error
+from telegram_agent.telegram._errors import wrap as wrap_telegram_error
 
 
 def _build_client(token: str | None) -> TelegramClient:
@@ -34,7 +34,7 @@ def _resolve_text(args: argparse.Namespace) -> str:
         return args.text
     if args.text_stdin:
         return sys.stdin.read()
-    raise TelekError(
+    raise TelegramAgentError(
         code=EXIT_USER_ERROR,
         message="missing message body",
         remediation="pass --text '...' or --text-stdin",
@@ -48,14 +48,14 @@ def _validate_send(
         me = client.get_me()
         chat = client.get_chat(args.chat)
         member = client.get_chat_member(args.chat, me["user_id"])
-    except TelekError:
+    except TelegramAgentError:
         raise
     except Exception as exc:
         raise wrap_telegram_error(exc, token=token) from exc
 
     status = member["status"]
     if status not in ("member", "administrator", "creator"):
-        raise TelekError(
+        raise TelegramAgentError(
             code=EXIT_USER_ERROR,
             message=f"bot is not in chat (status={status})",
             remediation="add the bot to the chat first",
@@ -63,13 +63,13 @@ def _validate_send(
 
     perms = member.get("permissions") or {}
     if chat["type"] == "channel" and not perms.get("can_post"):
-        raise TelekError(
+        raise TelegramAgentError(
             code=EXIT_USER_ERROR,
             message="bot lacks can_post_messages on this channel",
             remediation="promote the bot and grant post permission",
         )
     if perms.get("can_send_messages") is False:
-        raise TelekError(
+        raise TelegramAgentError(
             code=EXIT_USER_ERROR,
             message="group has messages disabled for non-admins",
             remediation="promote the bot or unlock the group",
@@ -95,10 +95,10 @@ def _validate_send(
 def _run_send(args: argparse.Namespace) -> None:
     token = load_token()
     if not token:
-        raise TelekError(
+        raise TelegramAgentError(
             code=EXIT_ENV_ERROR,
-            message="TELEK_BOT_TOKEN is not set",
-            remediation="set TELEK_BOT_TOKEN in env or .env file",
+            message="TELEGRAM_AGENT_BOT_TOKEN is not set",
+            remediation="set TELEGRAM_AGENT_BOT_TOKEN in env or .env file",
         )
     client = _build_client(token)
     plan, text = _validate_send(client, args, token)
@@ -115,7 +115,7 @@ def _run_send(args: argparse.Namespace) -> None:
             silent=args.silent,
             reply_to=args.reply_to,
         )
-    except TelekError:
+    except TelegramAgentError:
         raise
     except Exception as exc:
         raise wrap_telegram_error(exc, token=token) from exc
